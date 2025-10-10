@@ -1,0 +1,87 @@
+
+TEMPLATE_HEADER:
+  Author: [Vinod Dinakar]
+  Author_Email: [vinodd@juniper.net]
+  Main_Yang_Model: openconfig-system.yang
+  Yang_Model_Sub_Component: None
+  Automated_Release: 23.4R2
+  Automated_Platform: qfx5230-64cd-afo
+  Date: Jul-28-2025
+  Template_Type: STATE_ONLY  
+  Template_Version: 1.0
+  Yang_Model_Sub_Component_Include_Prefix_List: []
+  Yang_Model_Sub_Component_Exclude_Prefix_List: []
+  Template_Id: 23.4R2_qfx5230-64cd-afo_openconfig-system_STATE_ONLY_5228dec2
+  Tags: []
+  Notes: ""
+
+
+STATE_ONLY_SAMPLE_SETTINGS:
+    Default_Leaf_Sample_Settings:
+        Name:
+        Settings:
+            leaf_interval: 6
+            leaf_count: 2
+            leaf_timeout: 17
+    
+    Default_Parent_Sample_Settings:
+        Name:
+        Settings:
+            parent_interval: 15
+            parent_count: 2
+            parent_timeout: 44
+
+    Sample_Settings_Group_1:
+        Name:
+        Settings:
+            # leaf_interval: 10
+            # leaf_count: 2
+            # leaf_timeout: 29  
+
+
+STATE_ONLY_LEAFS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_1
+              Index: 1
+              Xpath: /system/state/hostname
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show system information
+                  pipe_display_xml_path: /system-information/host-name
+                  match_by_key_value: {'/system-information/hardware-model': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-system-information></get-system-information>
+                  rpc_xpath: /system-information/host-name
+                  match_by_key_value: {'/system-information/hardware-model': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+
+
+STATE_ONLY_PARENTS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_1
+              Index: 1
+              Xpath: /system/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_2
+              Index: 2
+              Xpath: /system
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+

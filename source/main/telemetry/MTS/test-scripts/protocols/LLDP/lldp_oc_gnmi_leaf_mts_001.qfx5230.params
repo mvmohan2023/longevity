@@ -1,0 +1,51 @@
+# $Id$
+#YANG GNMI VALIDATOR - SAMPLE PARAMS
+
+#topology "                                                                                                                                                                                                      
+#                                                                                                                                                                                                        
+#                    +-------------+                                                                                                                                                         
+#    +---------------+ Jvision (h0)|                                                                                                                                                                #    |  +------------+       |                  |                                                                                                                                                                
+#    |               | Server      |                                                                                                                                                              
+#    |               +-------------+                                                                                                                                                                
+#    |                                                                                                                                                                                               
+#    |                                                                                                                                                                                                    
+#    |                                                                                                                                                                                                      
+# +--+--+-+                             +---+----+                                                                                                                                                               
+# |       +-----------------------------|        |                                                                                                                                                               
+# |  R1   |                             |  R2    |                                                                                                                                                               
+# |       +-----------------------------+        |
+# +-------+                             +--------+
+#                                           
+#                                          
+#";
+#
+
+
+r0{
+        system{
+               make "juniper";
+               model  "qfx5230%";
+               fv-tags "dut";
+               fv-connect-user "root";
+               fv-connect-password "Embe1mpls";
+        }
+}
+r1{
+        system{
+               make "juniper";
+               model  "qfx%";
+               fv-connect-user "root";
+               fv-connect-password "Embe1mpls";
+        }
+}
+h0 {
+       system {
+               make (or "lab-trolls" "dell" "iXSystems" "hp");
+                resource-tags "JTI-SERVER";
+                fv-connect-user "root";
+                fv-connect-password "Embe1mpls";
+       }
+
+       interfaces {
+            }
+}

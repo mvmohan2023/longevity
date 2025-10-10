@@ -1,0 +1,77 @@
+import os
+import sys
+from pathlib import Path
+
+# Consider using relative imports or installing the package properly
+sys.path.insert(0, '/volume/regressions/toby/test-suites/MTS/resources/yang_gnmi_validator/openconfig')
+from yang_validator_test_mts import *
+import jnpr.toby.hldcl.device as device_utils
+from jnpr.toby.utils.pytest_utils.pytest_utils import testbed, testlibs, event_engine, rtlibs
+
+class LongevityTelemetry:
+    def __init__(self, yang_gnmi_server, host_name):
+        self.yang_gnmi_server_handle = yang_gnmi_server
+        state_only_templates = ['/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/openconfig-lldp_counters-stateonly_tc_template.yaml',
+                                '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/openconfig-interfaces_interface_stateonly_tc_template.yaml',
+                                '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/openconfig-system_platform_stateonly_tc_template.yaml',
+                                '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/openconfig-platform_chassis_stateonly_tc_template.yaml'
+                                ]
+        #state_only_templates = ['/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/openconfig-interfaces_interface_stateonly_tc_template.yaml']
+        callback_and_transform_func_files = ['/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/lldp_callback_func.py',
+                                             '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/interfaces_callback_func.py',
+                                             '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/interfaces_transform_func.py',
+                                             '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/platform_chassis_callback_func.py'
+                                             ]
+        #callback_and_transform_func_files = ['/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/interfaces_callback_func.py','/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/telemetry/callback_transform_funcs/interfaces_transform_func.py']
+        platform_annotation_file = 'openconfig-schema.xml'
+        env_dict1 = {'env_file_tmp_name':'system_env.yaml','dut':host_name}
+        #env_dict2 = {'env_file_tmp_name':'intf_xpath_env.yaml','dut':host_name}
+        #my_env_dict_list = [env_dict1, env_dict2]
+        my_env_dict_list = [env_dict1]
+        self.yang_gnmi_validator_files = {
+            "state_only_templates": state_only_templates,
+            "callback_and_transform_func_files": callback_and_transform_func_files,
+            "platform_annotation_file": platform_annotation_file,
+            "env_dict_list":my_env_dict_list
+        }
+        device_utils.execute_shell_command_on_device(
+            self.yang_gnmi_server_handle, 
+            command='source my_test_env/bin/activate'
+        )
+        configure_yang_gnmi_server(self.yang_gnmi_server_handle, self.yang_gnmi_validator_files)
+        
+
+    def run_oc_paths(self):
+        env_file = 'system_env.yaml'
+        oc_paths_list_lldp_intf = [f"STATE_ONLY_LEAFS.TC_group_{i}" for i in range(1, 14)]
+        oc_paths_list_platform = [f"STATE_ONLY_LEAFS.TC_group_{i}" for i in range(1, 5)]
+        oc_paths_list_system = [f"STATE_ONLY_LEAFS.TC_group_{i}" for i in range(1, 3)]
+        for i in range(4):
+            if i < 2:
+                oc_paths_list=oc_paths_list_lldp_intf
+            elif i == 2:
+                oc_paths_list=oc_paths_list_platform
+            else:
+                oc_paths_list=oc_paths_list_system
+            
+            for test_case in oc_paths_list:
+                testbed.log(f"Executing ...{test_case}")
+                #pdb.set_trace()
+                test_result = execute_yang_gnmi_validator(
+                    self.yang_gnmi_server_handle,
+                    test_case,
+                    "system_env.yaml",
+                    state_only_template=self.yang_gnmi_validator_files['state_only_templates'][i] # 0:lldp, 1:interfaces
+                )
+                testbed.log(f"TestCase:{test_case} and Result: {test_case}")
+        
+        #Fetch Ygnmi Validator Logs
+        fetch_ygnmi_validator_logs(self.yang_gnmi_server_handle)
+"""
+if __name__ == "__main__():"
+
+
+ 
+    
+    lng_telemetry = LongevityTelemetry(state_only_templates,callback_and_transform_func_files,platform_annoation_file)
+"""

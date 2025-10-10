@@ -1,0 +1,98 @@
+--- 
+jaas: 
+  params: /volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/longevity_qfx5240.params
+  plite: /volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/longevity_qfx5240.params.plite
+t: 
+  resources: 
+    r0: 
+      system: 
+        primary: 
+          controllers: 
+            re0: 
+              con-ip: 10.92.210.182
+              domain: englab.juniper.net
+              gateway: 10.92.245.254
+              hostname: svla-q5240-01
+              isoaddr: 47.0005.80ff.f800.0000.0108.0001.0102.5503.3058.00
+              loop-ip: 10.255.33.58
+              loop-ipv6: abcd::10:255:33:58
+              mgt-intf-name: re0:mgmt-0
+              mgt-ip: 10.92.244.116
+              mgt-ip-mask: 23
+              mgt-ipv6: abcd::10:92:244:116
+              osname: JunOS
+          fv-connect-controllers: all
+          fv-core-check: enable
+          fv-tags: evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx
+          is_vm: 0
+          machine: static
+          make: juniper
+          model: qfx5240-64od
+          name: svla-q5240-01
+          osname: JunOS
+          role: 'null'
+          uv-evo-brcm-inspection-enabled: 1
+          uv-evo-jemelloc-mem-prof-app-list: evo-aftmand,cda
+          uv-evo-mem-profile-app-list: fibd,cmdd,rpdagent,evo-aftmand-bt
+          uv-live-core-app-list: routing,distributord
+          uv-longevity-npu-memory-utilization-list: "{\n            'mem-util-kht-epp-mapid-utilization':'80',\n            'mem-util-kht-l2domain-utilization':'99',\n            'mem-util-kht-slu-my-mac-utilization':'80',\n            'mem-util-kht-dlu-idb-utilization':'75',\n            'mem-util-jnh-mm-global-utilization':'50',\n            'mem-util-jnh-mm-private-utilization':'100',\n            'mem-util-jnh-loadbal-utilization': '100',\n            'mem-util-epp-total-mem-utilization':'50',\n            'mem-util-flt-vfilter-utilization': '100',\n            'mem-util-flt-phyfilter-utilization':'100',\n            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',\n            'mem-util-flt-alpha-0-kht-utilization':'90',\n            'mem-util-policer-id-utilization':'100',\n            'mem-util-plct-utilization':'90'\n        }"
+          uv-processes: "{\n            'rpd':'10',\n            'rpd-agent':'10',\n            'fibd':'10',\n            'arpd':'10',\n            'picd':'20',\n            'distributord':'20',\n            'EvoAftMan-main':'10',\n            # 'EvoAftManBt-mai':'10',\n            'lacpd':'20'\n        }"
+    r1: 
+      system: 
+        primary: 
+          controllers: 
+            re0: 
+              con-ip: 10.92.219.230
+              domain: englab.juniper.net
+              gateway: 10.92.229.254
+              hostname: svla-q5240-q02
+              isoaddr: 47.0005.80ff.f800.0000.0108.0001.0102.5500.9147.00
+              loop-ip: 10.255.9.147
+              loop-ipv6: abcd::10:255:9:147
+              mgt-intf-name: re0:mgmt-0
+              mgt-ip: 10.92.229.89
+              mgt-ip-mask: 23
+              mgt-ipv6: abcd::10:92:229:89
+              osname: JunOS
+          fv-connect-controllers: all
+          fv-core-check: enable
+          fv-tags: evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx
+          is_vm: 0
+          machine: static
+          make: juniper
+          model: qfx5240-64qd
+          name: svla-q5240-q02
+          osname: JunOS
+          role: 'null'
+          uv-evo-jemelloc-mem-prof-app-list: evo-aftmand,cda
+          uv-evo-mem-profile-app-list: fibd,cmdd,rpdagent,evo-aftmand-bt
+          uv-live-core-app-list: routing,distributord
+          uv-longevity-npu-memory-utilization-list: "{\n            'mem-util-kht-epp-mapid-utilization':'80',\n            'mem-util-kht-l2domain-utilization':'99',\n            'mem-util-kht-slu-my-mac-utilization':'80',\n            'mem-util-kht-dlu-idb-utilization':'75',\n            'mem-util-jnh-mm-global-utilization':'50',\n            'mem-util-jnh-mm-private-utilization':'100',\n            'mem-util-jnh-loadbal-utilization': '100',\n            'mem-util-epp-total-mem-utilization':'50',\n            'mem-util-flt-vfilter-utilization': '100',\n            'mem-util-flt-phyfilter-utilization':'100',\n            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',\n            'mem-util-flt-alpha-0-kht-utilization':'90',\n            'mem-util-policer-id-utilization':'100',\n            'mem-util-plct-utilization':'90'\n        }"
+          uv-processes: "{\n            'rpd':'10',\n            'rpd-agent':'10',\n            'fibd':'10',\n            'arpd':'10',\n            'picd':'20',\n            'distributord':'20',\n            'EvoAftMan-main':'10',\n            # 'EvoAftManBt-mai':'10',\n            'lacpd':'20'\n        }"
+  user_variables: 
+    uv-active-longevity-events-file: longevity_events.txt
+    uv-data-collection-dump-at-convergence: 1
+    uv-evo-enable-heap-dump-at-convergence: 1
+    uv-evo-enable-memory-profiling: 1
+    uv-evo-jemelloc-dump-enable: 1
+    uv-evo-proc-collector-profile-tools-path: /volume/regressions/toby/test-suites/pdt/lib/longevity/dev_branch
+    uv-evo-system-dump-at-convergence: 1
+    uv-evo-system-npu-mem-size-tol: 5
+    uv-junos-show-system-processes-extensiv-tolerance: 20
+    uv-longevity-customized-test-scenario-duration-percent: 
+      - 20
+      - 40
+      - 40
+    uv-longevity-global-iterations: 1
+    uv-longevity-post-lrm-baseline-wait-time: 120
+    uv-longevity-post-reboot-router-wait-time: 300
+    uv-longevity-skip-lrm-baseline-step: 0
+    uv-longevity-skip-reboot-router: 0
+    uv-longevity-test-duration: 12
+    uv-longevity-test-scenario-1-duration-percent: 90
+    uv-longevity-test-scenario-2-duration-percent: 10
+    uv-longevity-test-settle-down-time: 1800
+    uv-tb-alloc-bytes-threshold: 20000000
+    uv-te-converge-itrs: 10
+    uv-te-yaml-file: /volume/regressions/toby/test-suites/pdt/lib/longevity/dev_branch/longevity_te_registrations.yaml
+    uv-tm-alloc-bytes-threshold: 20000000

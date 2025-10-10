@@ -1,0 +1,4 @@
+r0|Four|60|ifd_cfg_enable_disable|Flap_Interfaces_ifd_cfg_enable_disable|args=et-0/0/0:0
+r0|Four|60|ifd_cfg_enable_disable|Flap_Interfaces_ifd_cfg_enable_disable|args=et-0/0/0:1
+r0|Four|60|ifd_cfg_enable_disable|Flap_Interfaces_ifd_cfg_enable_disable|args=et-0/0/0:2
+r0|Four|60|ifd_cfg_enable_disable|Flap_Interfaces_ifd_cfg_enable_disable|args=et-0/0/0:3

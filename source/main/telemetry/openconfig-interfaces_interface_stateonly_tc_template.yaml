@@ -1,0 +1,438 @@
+
+TEMPLATE_HEADER:
+  Author: [Tapas Pradhan]
+  Author_Email: [tpradhan@juniper.net]
+  Main_Yang_Model: openconfig-interfaces.yang
+  Yang_Model_Sub_Component: None
+  Automated_Release: 23.4R2
+  Automated_Platform: qfx5130-48cm
+  Date: Jul-05-2025
+  Template_Type: STATE_ONLY  
+  Template_Version: 1.0
+  Template_Id: 23.4R2_qfx5130-48cm_openconfig-interfaces_STATE_ONLY_c3b8fb04
+  Yang_Model_Sub_Component_Include_Prefix_List: ["/interfaces/interface", "/interfaces/interface/state"]
+  Yang_Model_Sub_Component_Exclude_Prefix_List: ["/interfaces/interface/routed-vlan/","/interfaces/interface/tunnel/"]
+  Tags: []
+  Notes: ""
+
+
+STATE_ONLY_SAMPLE_SETTINGS:
+    Default_Leaf_Sample_Settings:
+        Name:
+        Settings:
+            leaf_interval: 30
+            leaf_count: 1
+            leaf_timeout: 60
+    
+    Default_Parent_Sample_Settings:
+        Name:
+        Settings:
+            parent_interval: 15
+            parent_count: 2
+            parent_timeout: 44
+
+    Sample_Settings_Group_1:
+        Name:
+        Settings:
+            # leaf_interval: 10
+            # leaf_count: 2
+            # leaf_timeout: 29  
+
+
+STATE_ONLY_LEAFS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_1
+              Index: 1
+              Xpath: /interfaces/interface[name=*]/state/ifindex
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces
+                  pipe_display_xml_path: /interface-information/physical-interface/snmp-index
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/snmp-index
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_2
+              Index: 2
+              Xpath: /interfaces/interface[name=*]/state/logical
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:interfaces_logical
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:interfaces_logical
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_3:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_3
+              Index: 3
+              Xpath: /interfaces/interface[name=*]/ethernet/state/hw-mac-address
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces extensive
+                  pipe_display_xml_path: /interface-information/physical-interface/hardware-physical-address
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/hardware-physical-address
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_4:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_4
+              Index: 4
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state/name
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces terse
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface/name
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface/name
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_5:
+        Name:
+        Tests:                   
+            - Name: State_Only_Leaf_Test_5
+              Index: 5
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state/ifindex
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces extensive
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface/snmp-index
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface/snmp-index
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_6:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_6
+              Index: 6
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state/admin-status
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces terse
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface/admin-status
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information><terse/></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface/admin-status
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_7:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_7
+              Index: 7
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state/oper-status
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces terse
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface/oper-status
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information><terse/></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface/oper-status
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_8:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_8
+              Index: 8
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state/logical
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces terse
+                  pipe_display_xml_path: /interface-information/physical-interface/logical-interface/name
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: interfaces_callback_func.py:interfaces_logical_ifl
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/logical-interface/name
+                  match_by_key_value: {'/interface-information/physical-interface/logical-interface/name': '*', 'transform_func': 'interfaces_transform_func.py:transform'}
+                  callback_func: interfaces_callback_func.py:interfaces_logical_ifl
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_9:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_9
+              Index: 9
+              Xpath: /interfaces/interface[name=*]/aggregation/state/lag-speed
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces ae* extensive
+                  pipe_display_xml_path: /interface-information/physical-interface/speed
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:ae_interfaces_speed
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/speed
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:ae_interfaces_speed
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_10:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_10
+              Index: 10
+              Xpath: /interfaces/interface[name=*]/ethernet/state/mac-address
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces extensive
+                  pipe_display_xml_path: /interface-information/physical-interface/current-physical-address
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/current-physical-address
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_11:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_11
+              Index: 11
+              Xpath: /interfaces/interface[name=*]/ethernet/state/port-speed
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces
+                  pipe_display_xml_path: /interface-information/physical-interface/speed
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:port_speed
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/speed
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: interfaces_callback_func.py:port_speed
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_12:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_12
+              Index: 12
+              Xpath: /interfaces/interface[name=*]/state/admin-status
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces
+                  pipe_display_xml_path: /interface-information/physical-interface/admin-status
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/admin-status
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+    TC_group_13:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_13
+              Index: 13
+              Xpath: /interfaces/interface[name=*]/state/oper-status
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show interfaces
+                  pipe_display_xml_path: /interface-information/physical-interface/oper-status
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-interface-information></get-interface-information>
+                  rpc_xpath: /interface-information/physical-interface/oper-status
+                  match_by_key_value: {'/interface-information/physical-interface/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+
+
+STATE_ONLY_PARENTS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_1
+              Index: 1
+              Xpath: /interfaces/interface[name=*]/ethernet
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_2
+              Index: 2
+              Xpath: /interfaces/interface[name=*]/ethernet/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_3:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_3
+              Index: 3
+              Xpath: /interfaces/interface[name=*]/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_4:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_4
+              Index: 4
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_5:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_5
+              Index: 5
+              Xpath: /interfaces/interface[name=*]/aggregation/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_6:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_6
+              Index: 6
+              Xpath: /interfaces/interface[name=*]/subinterfaces/subinterface[index=*]
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_7:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_7
+              Index: 7
+              Xpath: /interfaces
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_8:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_8
+              Index: 8
+              Xpath: /interfaces/interface[name=*]
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_9:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_9
+              Index: 9
+              Xpath: /interfaces/interface[name=*]/subinterfaces
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+    TC_group_10:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_10
+              Index: 10
+              Xpath: /interfaces/interface[name=*]/aggregation
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+

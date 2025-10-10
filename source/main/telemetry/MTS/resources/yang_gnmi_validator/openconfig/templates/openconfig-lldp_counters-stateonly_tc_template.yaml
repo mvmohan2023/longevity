@@ -1,0 +1,501 @@
+
+TEMPLATE_HEADER:
+  Author: [Tapas Pradhan]
+  Author_Email: [tpradhan@juniper.net]
+  Main_Yang_Model: openconfig-lldp.yang
+  Yang_Model_Sub_Component: None
+  Automated_Release: 23.4R2
+  Automated_Platform: qfx5130-48cm
+  Date: May-05-2025
+  Technology_Area: PROTOCOLS 
+  Sub_Area: LLDP
+  Feature: LLDP
+  Robot_Script_Location: /homes/tpradhan/oc_toby/sample_system_lldp_script_leaf.robot
+  Template_Type: STATE_ONLY  
+  Template_Version: 1.0
+  Template_Id: 23.4R2_qfx5130-48cm_openconfig-lldp_STATE_ONLY_c72289ea
+  Yang_Model_Sub_Component_Include_Prefix_List: ["/lldp/state/counters", "/lldp/interfaces/interface/state/counters"]
+  Yang_Model_Sub_Component_Exclude_Prefix_List: []
+  Tags: []
+  Notes: ""
+
+
+STATE_ONLY_SAMPLE_SETTINGS:
+    Default_Leaf_Sample_Settings:
+        Name:
+        Settings:
+            leaf_interval: 6
+            leaf_count: 2
+            leaf_timeout: 17
+    
+    Default_Parent_Sample_Settings:
+        Name:
+        Settings:
+            parent_interval: 15
+            parent_count: 2
+            parent_timeout: 44
+
+    Sample_Settings_Group_1:
+        Name:
+        Settings:
+            # leaf_interval: 10
+            # leaf_count: 2
+            # leaf_timeout: 29  
+
+
+STATE_ONLY_LEAFS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: LLDP tlv-discard leaf level sensor path verification using GNMI
+              Index: 1
+              Xpath: /lldp/state/counters/tlv-discard
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/tlv-discard
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: LLDP tlv-unknown leaf level sensor path verification using GNMI
+              Index: 2
+              Xpath: /lldp/state/counters/tlv-unknown
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-unknown-tlvs
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-unknown-tlvs
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/tlv-unknown
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_3:
+        Name:
+        Tests:
+            - Name: LLDP tlv-accepted leaf level sensor path verification using GNMI
+              Index: 3
+              Xpath: /lldp/state/counters/tlv-accepted
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/tlv-accepted
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_4:
+        Name:
+        Tests:
+            - Name: LLDP frame-out leaf level sensor path verification using GNMI
+              Index: 4
+              Xpath: /lldp/state/counters/frame-out
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/frame-out
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_5:
+        Name:
+        Tests:
+            - Name: LLDP frame-error-in leaf level sensor path verification using GNMI
+              Index: 5
+              Xpath: /lldp/state/counters/frame-error-in
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-error-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-error-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/frame-error-in
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_6:
+        Name:
+        Tests:
+            - Name: LLDP frame-in leaf level sensor path verification using GNMI
+              Index: 6
+              Xpath: /lldp/state/counters/frame-in
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics interface re0:mgmt-0
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': '*'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-interface-statistics></get-lldp-interface-statistics>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {'/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name': 're0:mgmt-0'}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/state/counters/frame-in
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_7:
+        Name:
+        Tests:
+            - Name: LLDP frame-in leaf level sensor path verification using GNMI
+              Index: 7
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-in
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics 
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-in
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_8:
+        Name:
+        Tests:
+            - Name: LLDP frame-error-in leaf level sensor path verification using GNMI
+              Index: 8
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-error-in
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-error-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information> 
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-error-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-error-in
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_9:
+        Name:
+        Tests:
+            - Name: LLDP tlv-discard leaf level sensor path verification using GNMI
+              Index: 9
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/tlv-discard
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics 
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information> 
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/tlv-discard
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_10:
+        Name:
+        Tests:
+            - Name: LLDP frame-out leaf level sensor path verification using GNMI
+              Index: 10
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-out
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-out
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_11:
+        Name:
+        Tests:
+            - Name: LLDP frame-discard leaf level sensor path verification using GNMI
+              Index: 11
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-discard
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-tlv-discard-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-discard
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_12:
+        Name:
+        Tests:
+            - Name: LLDP frame-error-out leaf level sensor path verification using GNMI
+              Index: 12
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-error-out
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-error-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information> 
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-transmit-packet-error-count
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/frame-error-out
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_13:
+        Name:
+        Tests:
+            - Name: LLDP tlv-unknown leaf level sensor path verification using GNMI
+              Index: 13
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters/tlv-unknown
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show lldp statistics
+                  pipe_display_xml_path: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-unknown-tlvs
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Rpc_Mapping:
+                  rpc: <get-lldp-statistics-information></get-lldp-statistics-information>
+                  rpc_xpath: /lldp-statistics/lldp-interface-statistics/lldp-receive-packet-unknown-tlvs
+                  match_by_key_value: {"/lldp-statistics/lldp-interface-statistics/lldp-statistics-interface-name":"*"}
+                  callback_func: sample_callback_func_lldp.py:interfaces_lldp_counter
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /lldp/interfaces/interface[name=*]/state/counters/tlv-unknown
+                  #     Platform : ["mx240", "mx960"]
+
+
+STATE_ONLY_PARENTS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_1
+              Index: 1
+              Xpath: /lldp/interfaces/interface[name=*]/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_2
+              Index: 2
+              Xpath: /lldp/interfaces/interface[name=*]/state/counters
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_3:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_3
+              Index: 3
+              Xpath: /lldp/state/counters
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_4:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_4
+              Index: 4
+              Xpath: /lldp/interfaces/interface[name=*]
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_5:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_5
+              Index: 5
+              Xpath: /lldp
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_6:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_6
+              Index: 6
+              Xpath: /lldp/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+
+    TC_group_7:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_7
+              Index: 7
+              Xpath: /lldp/interfaces
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+

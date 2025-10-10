@@ -1,0 +1,177 @@
+
+TEMPLATE_HEADER:
+  Author: [Suvrat]
+  Author_Email: [psuvrat@juniper.net]
+  Main_Yang_Model: openconfig-platform.yang
+  Yang_Model_Sub_Component: None
+  Yang_Model_Sub_Component_Include_Prefix_List: ["/components/component/state/description", "/components/component/state/serial-no","/components/component/state/part-no","/components/component/state/hardware-version"]
+  Yang_Model_Sub_Component_Exclude_Prefix_List: ["/components/component/optical-channel/","/components/component/transceiver/","/components/component/linecard","/components/component/healthz","/components/component/controller-card","/components/component/software-module","/components/component/backplane","/components/component/integrated-circuit","/components/component/cpu","/components/component/fan","/components/component/power-supply","/components/component/port","/components/component/chassis","/components/component/subcomponents","/components/component/properties","/components/component/state/equipment-failure","/components/component/state/equipment-mismatch","/components/component/state/entity-id","/components/component/state/pcie/"]
+  Automated_Release: 24.2R2
+  Automated_Platform: qfx5130-48cm
+  Date: May-23-2025
+  Technology_Area: 
+  Sub_Area: 
+  Feature: 
+  Robot_Script_Location: 
+  Template_Type: STATE_ONLY  
+  Template_Version: 1.0
+  Template_Id: 24.2R2_qfx5130-48cm_openconfig-platform_STATE_ONLY_c955239f
+  Tags: []
+  Notes: ""
+
+
+STATE_ONLY_SAMPLE_SETTINGS:
+    Default_Leaf_Sample_Settings:
+        Name:
+        Settings:
+            leaf_interval: 6
+            leaf_count: 2
+            leaf_timeout: 17
+    
+    Default_Parent_Sample_Settings:
+        Name:
+        Settings:
+            parent_interval: 15
+            parent_count: 2
+            parent_timeout: 44
+
+    Sample_Settings_Group_1:
+        Name:
+        Settings:
+            # leaf_interval: 10
+            # leaf_count: 2
+            # leaf_timeout: 29  
+
+
+STATE_ONLY_LEAFS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_1
+              Index: 1
+              Xpath: /components/component[name=*]/state/description
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show chassis hardware
+                  pipe_display_xml_path: /chassis-inventory/chassis/chassis-module/description
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: 
+              Rpc_Mapping:
+                  rpc: <get-chassis-inventory></get-chassis-inventory>
+                  rpc_xpath: /chassis-inventory/chassis/chassis-module/description
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: 
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /components/component[name=*]/state/description
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_2:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_2
+              Index: 2
+              Xpath: /components/component[name=*]/state/hardware-version
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show chassis hardware
+                  pipe_display_xml_path: /chassis-inventory/chassis/chassis-module/version
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_version
+              Rpc_Mapping:
+                  rpc: <get-chassis-inventory></get-chassis-inventory>
+                  rpc_xpath: /chassis-inventory/chassis/chassis-module/version
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_version
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /components/component[name=*]/state/hardware-version
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_3:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_3
+              Index: 3
+              Xpath: /components/component[name=*]/state/serial-no
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show chassis hardware
+                  pipe_display_xml_path: /chassis-inventory/chassis/chassis-module/serial-number
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_versionx
+              Rpc_Mapping:
+                  rpc: <get-chassis-inventory></get-chassis-inventory>
+                  rpc_xpath: /chassis-inventory/chassis/chassis-module/serial-number
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_versionx
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /components/component[name=*]/state/serial-no
+                  #     Platform : ["mx240", "mx960"]
+
+    TC_group_4:
+        Name:
+        Tests:
+            - Name: State_Only_Leaf_Test_4
+              Index: 4
+              Xpath: /components/component[name=*]/state/part-no
+              Value: [] 
+              Sample_settings: 'Default_Leaf_Sample_Settings'
+              Test_Type: "functional" # functional / negative 
+              Cli_Mapping:
+                  cli_show_cmd: show chassis hardware
+                  pipe_display_xml_path: /chassis-inventory/chassis/chassis-module/part-number
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_versionx
+              Rpc_Mapping:
+                  rpc: <get-chassis-inventory></get-chassis-inventory>
+                  rpc_xpath: /chassis-inventory/chassis/chassis-module/part-number
+                  match_by_key_value: {'/chassis-inventory/chassis/chassis-module/name': '*'}
+                  callback_func: platform_chassis_callback_func.py:platform_hardware_versionx
+              Onchange_Mapping:
+                  callback_func: 
+                  max_timeout: 
+                  values: 
+                  verification_method: 
+              Release_and_Platform: # and condition release and platform
+                  # "<=23.1": # valid python expression
+                  #     Value: []
+                  #     Xpath: /components/component[name=*]/state/part-no
+                  #     Platform : ["mx240", "mx960"]
+
+
+STATE_ONLY_PARENTS:
+    TC_group_1:
+        Name:
+        Tests:
+            - Name: State_Only_Parent_Test_1
+              Index: 1
+              Xpath: /components/component[name=*]/state
+              Test_Type: "functional" # functional / negative 
+              Sample_settings: 'Default_Parent_Sample_Settings'
+

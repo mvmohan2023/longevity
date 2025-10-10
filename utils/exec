@@ -1,0 +1,5 @@
+source /volume/labtools/bin/jpytest_prod/bin/activate 
+
+jpytest --params longevity_ipclos_5700.params.yaml --testcase test_passive_longevity longevity_ipclos.py 
+jpytest --params longevity_ipclos_5700.params.yaml --testcase test_active_longevity longevity_ipclos.py 
+

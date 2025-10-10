@@ -1,0 +1,609 @@
+#### unset TE_TOPOLOGY;export PARAMS_MACHINES=sp-ardbeg-1-q
+#### uv-evo-ps-mem-location "/homes/apenjuri/proj/scapa/cuc-2003/script/ps_mem.py";
+# Test Steps:
+# 1. TB with test config
+# 2. Load LRM Baseline
+# 3. Reboot Router
+# 4. Post reboot, capture memory monitoring parameters and take a dump of memory footprint
+# 5. Load Test Config
+# 6. Wait for SUT to converge
+# 7. Take Pre Test capture and dump
+# 8. Run Test
+# 9. Take Post Test Captue and dump
+# 10. Load LRM Baseline and wait for the router to settle down.
+# 11. capture memory monitoring parameters and take a dump of memory footprint
+# 12. Compare with the data with Step#4
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   ME FV Knob
+# Description   :   FV Knob for ME. Keep interval as high in case the test runs for longer durationl
+# Values        :   interval=300
+#--------------------------------------------------------------------------------------------------------
+#fv-monitoring-engine "enable,interval=600";
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-test-duration
+# Description   :   Longevity Test Duration in hours.
+# Values        :   Number 
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-test-duration 12;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-active-longevity-events-file 
+# Description   :   Longevity Events.
+#--------------------------------------------------------------------------------------------------------
+uv-active-longevity-events-file "longevity_events.txt";
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-test-settle-down-time
+# Description   :   Post Test Settle down Timer with LRM Baseline.
+# Values        :   Seconds | Default: 3600
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-test-settle-down-time 1800;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-skip-lrm-baseline-step
+# Description   :   Knob that skips loading of LRM baseline during longevity test preparation phase.
+# Values        :   1: skip | 0: load | Default: 0
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-skip-lrm-baseline-step 0;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-post-lrm-baseline-wait
+# Description   :   Time to wait post loading the LRM baseline
+# Values        :   Time in Seconds | Default: 600 seconds
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-post-lrm-baseline-wait-time 1800;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-skip-reboot-router
+# Description   :   Knob that skips rebooting of the longevity dut during longevity test preparation phase.
+# Values        :   1: skip | 0: reboot | Default: 0
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-skip-reboot-router 0;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-post-lrm-baseline-wait
+# Description   :   Time to wait post loading the LRM baseline
+# Values        :   Time in Seconds | Default: 1800 seconds
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-post-reboot-router-wait-time 1800;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-longevity-global-iterations
+# Description   :   Number of test iterations post longevity test preparation phase
+# Values        :   Integer | Default: 1
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-global-iterations 1;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-te-yaml-file
+# Description   :   Absolute File Path of the TE Registrations File
+#--------------------------------------------------------------------------------------------------------
+uv-te-yaml-file "/volume/regressions/toby/test-suites/pdt/lib/longevity/dev_branch/longevity_te_registrations.yaml";
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-system-dump-at-convergence
+# Description   :   Collects and dumps data from the router during convergence.
+# Values        :   0: Disable | 1: Enable
+#--------------------------------------------------------------------------------------------------------
+uv-evo-system-dump-at-convergence 1;
+#--------------------------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-enable-memory-profiling
+# Description   :   Enables Memory profiling and dumps mem profile for the apps defined with uv-evo-mem-profile-app-list
+# Values        :   0: Disable | 1: Enable
+#--------------------------------------------------------------------------------------------------------------------------
+uv-evo-enable-memory-profiling 1;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-enable-heap-dump-at-convergence
+# Description   :   Heap dumps for the apps collected during convergence.
+# Values        :   0: Disable | 1: Enable
+#--------------------------------------------------------------------------------------------------------
+uv-evo-enable-heap-dump-at-convergence 1;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-jemelloc-dump-enable
+# Description   :   Dumpls jemelloc stats
+# Values        :   0: Disable | 1: Enable
+#--------------------------------------------------------------------------------------------------------
+uv-evo-jemelloc-dump-enable 1;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-tb-alloc-bytes-threshold
+# Description   :   Defines task alloc block threshold in bytes
+#--------------------------------------------------------------------------------------------------------
+uv-tb-alloc-bytes-threshold 20000000;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-tm-alloc-bytes-threshold
+# Description   :   Defines task malloc block threshold in bytes
+#--------------------------------------------------------------------------------------------------------
+uv-tm-alloc-bytes-threshold 20000000;
+#--------------------------------------------------------------------------------------------------------
+# Knob          :   uv-te-converge-itrs
+# Description   :   Test Engine Convergence Iterations.
+#--------------------------------------------------------------------------------------------------------
+uv-te-converge-itrs 10;
+#-----------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-proc-collector-profile-path
+# Description   :   Memory Profile Tools Location
+#-----------------------------------------------------------------------------------------------------------
+uv-evo-proc-collector-profile-tools-path    "/volume/regressions/toby/test-suites/pdt/lib/longevity/dev_branch";
+
+#-----------------------------------------------------------------------------------------------------------
+# Knob          :   uv-evo-system-npu-mem-size-tol 
+# Description   :   Npu memory utilization tolerance in percentage 
+#-----------------------------------------------------------------------------------------------------------
+uv-evo-system-npu-mem-size-tol 5;
+
+#--------------------------------------------------------------------------------------------------------
+# Default Test Scenario duration in percentage.
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-test-scenario-1-duration-percent 90;
+uv-longevity-test-scenario-2-duration-percent 10;
+
+#--------------------------------------------------------------------------------------------------------
+# Customized Test Scenario Duration in percentage.
+#--------------------------------------------------------------------------------------------------------
+uv-longevity-customized-test-scenario-duration-percent   ("20" "40" "40"); 
+
+
+# Junos Specfic
+# Description   :   Collects and dumps data from the router during convergence
+uv-data-collection-dump-at-convergence 1;
+
+#--------------------------------------------------------------------------------------------------------
+# uv-junos-show-system-processes-extensiv-tolerance | process monitoring threshold
+#--------------------------------------------------------------------------------------------------------
+uv-junos-show-system-processes-extensiv-tolerance 20; 
+
+
+
+r0 {
+    system {
+        name "san-q5240-15";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        #uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,ifmand,msvcsd,evo-aftmand-bt,fabspoked-pfe,evo-cda-bt,picd,aggd,alarmd,clksyncd,clockd,fabricHub,fpa,jdhcpd,jinsightd,mcasthostd,mfilterd,orchestratord,p4-switch,pci-agent,plat-mra,resiliencyd,l2ald,l2cpd";
+        #uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,ifmand,msvcsd,evo-aftmand-bt,fabspoked-pfe,evo-cda-bt,picd,aggd,alarmd,clksyncd,clockd,fpa,jdhcpd,jinsightd,mfilterd,orchestratord,pci-agent,plat-mra,l2ald-agent,l2cpd-agent,arpd,firewalld";
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+        uv-evo-brcm-inspection-enabled 1;
+    }
+}
+
+r1 {
+    system {
+        name "san-q5240-q02";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+r2 {
+    system {
+        name "san-q5240-01";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+
+r3 {
+    system {
+        name "san-q5240-02";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+
+r4 {
+    system {
+        name "san-q5240-03";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+
+r5 {
+    system {
+        name "san-q5230-01";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+
+r6 {
+    system {
+        name "san-q5220-01";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}
+
+r7 {
+    system {
+        name "san-q5130-01";
+        #------------------------------------------
+        # Mandatory Knob to connect all the nodes
+        #------------------------------------------
+        fv-connect-controllers "all";
+        fv-core-check "enable";
+        fv-tags "evo:NOMONSYSLOG:longevity:longevity_dut:ptx10001-36mr:ptx";
+        #-----------------------------------------------------------------------------
+        # Process List to be monitored. Names to be given from top command output.
+        #-----------------------------------------------------------------------------
+        uv-processes "{
+            'rpd':'10',
+            'rpd-agent':'10',
+            'fibd':'10',
+            'arpd':'10',
+            'picd':'20',
+            'distributord':'20',
+            'EvoAftMan-main':'10',
+            # 'EvoAftManBt-mai':'10',
+            'lacpd':'20'
+        }";
+        #----------------------------------------------------------------------------------
+        # NPU memory List to be monitored.Names to be given from "show npu memory info" o/p 
+        #----------------------------------------------------------------------------------
+        uv-longevity-npu-memory-utilization-list "{
+            'mem-util-kht-epp-mapid-utilization':'80',
+            'mem-util-kht-l2domain-utilization':'99',
+            'mem-util-kht-slu-my-mac-utilization':'80',
+            'mem-util-kht-dlu-idb-utilization':'75',
+            'mem-util-jnh-mm-global-utilization':'50',
+            'mem-util-jnh-mm-private-utilization':'100',
+            'mem-util-jnh-loadbal-utilization': '100',
+            'mem-util-epp-total-mem-utilization':'50',
+            'mem-util-flt-vfilter-utilization': '100',
+            'mem-util-flt-phyfilter-utilization':'100',
+            #'mem-util-flt-alpha-0-kht-peak-utilization':'90',
+            'mem-util-flt-alpha-0-kht-utilization':'90',
+            'mem-util-policer-id-utilization':'100',
+            'mem-util-plct-utilization':'90'
+        }";
+        #-----------------------------------------------------------------------------
+        # Application Names. Names to be picked from show system application
+        #-----------------------------------------------------------------------------        
+        uv-evo-mem-profile-app-list  "fibd,cmdd,rpdagent,evo-aftmand";
+        #-----------------------------------------------------------------------------
+        # Application Names. 
+        #-----------------------------------------------------------------------------        
+        uv-evo-jemelloc-mem-prof-app-list "evo-aftmand,cda";
+        #--------------------------------------------------------------------------------------------
+        # Application Names for the live cores. Names to be picked from show system application
+        #--------------------------------------------------------------------------------------------        
+        uv-live-core-app-list "routing,distributord";
+    }
+}

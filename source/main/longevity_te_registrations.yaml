@@ -1,0 +1,1234 @@
+TE_DATA:
+    uv-dm-enable: 0
+    TE_REGISTRATION_DATA:
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_FPC_STATUS
+#     - CHK_FPC_CPU_TOTAL
+#     - CHK_FPC_HEAP
+#     - CHK_FPC_HEAP_BELOW_80
+#     - CHK_FPC_MEM_BUF_UTIL
+# CMD: 
+#     - show chassis fpc
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                                              
+#### CHK_FPC_STATUS
+        CHK_FPC_STATUS:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-fpc
+                parameter: fpc-state
+                command: show chassis fpc
+                dataformat: xml
+                tolerance: 0
+                xpath: //fpc-information/fpc[state="Online"]/slot
+                expression: current == snapshot 
+                database: ${True}
+                node: master
+                controller: master
+#### CHK_FPC_CPU_TOTAL
+        CHK_FPC_CPU_TOTAL:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - ptx10001-36mr
+                    - ptx10003
+                    - acx7509
+                trace: show-chassis-fpc
+                parameter: fpc-cpu-total
+                command: show chassis fpc
+                dataformat: xml
+                tolerance: 10
+                xpath: //fpc-information/fpc[state="Online"]/cpu-total
+                expression: current <= 80
+                database: ${True}
+                node: master
+                controller: master   
+#### CHK_FPC_HEAP
+        CHK_FPC_HEAP:
+            UV-ARGS:
+                provision-registration: 0
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - ptx10001-36mr
+                    - ptx10003
+                    - acx7509
+                trace: show-chassis-fpc
+                parameter: fpc-heap-util
+                command: show chassis fpc
+                dataformat: xml
+                tolerance: 20
+                xpath: //fpc-information/fpc[state="Online"]/memory-heap-utilization
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot 
+                database: ${True}
+                node: master
+                controller: master
+#### CHK_FPC_HEAP_BELOW_80
+        CHK_FPC_HEAP_BELOW_80:
+            UV-ARGS:
+                provision-registration: 0
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - ptx10001-36mr
+                    - ptx10003
+                    - acx7509
+                trace: show-chassis-fpc
+                parameter: fpc-heap-util-below-80
+                command: show chassis fpc
+                dataformat: xml
+                tolerance: 15
+                xpath: //fpc-information/fpc[state="Online"]/memory-heap-utilization
+                expression: current <= 80
+                database: ${True}                
+                node: master
+                controller: master                                
+#### CHK_FPC_MEM_BUF_UTIL
+        CHK_FPC_MEM_BUF_UTIL:
+            UV-ARGS:
+                provision-registration: 0
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - ptx10001-36mr
+                    - ptx10003
+                    - acx7509
+                trace: show-chassis-fpc
+                parameter: fpc-mem-buf-util
+                command: show chassis fpc
+                dataformat: xml
+                tolerance: 20
+                xpath: //fpc-information/fpc[state="Online"]/memory-buffer-utilization
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot 
+                database: ${True}
+                node: master
+                controller: master                                     
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_FPC_PIC_STATE
+# CMD: 
+#     - show chassis fpc pic-status
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                                              
+        CHK_FPC_PIC_STATE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-fpc-pic-status
+                parameter: fpc-pic-state
+                command: show chassis fpc pic-status
+                dataformat: xml
+                tolerance: 0
+                xpath: //fpc-information/fpc[state="Online"]/pic[pic-state="Online"]/pic-slot
+                expression: current == snapshot 
+                database: ${True}
+                node: master
+                controller: master                
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_RE_CPU_UTIL
+#     - CHK_RE_MEM_BUFF_UTIL
+# CMD: 
+#     - show chassis routing-engine
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                                              
+#### CHK_RE_CPU_UTIL 
+        CHK_RE_CPU_UTIL:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-routing-engine
+                parameter: re-cpu-util
+                command: show chassis routing-engine
+                dataformat: xml
+                tolerance: 20
+                xpath: //route-engine-information/route-engine/cpu-idle3
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}               
+                node: master
+                controller: master                               
+#### CHK_RE_MEM_BUFF_UTIL
+        CHK_RE_MEM_BUFF_UTIL:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-routing-engine
+                parameter: re-cpu-mem-buf-util
+                command: show chassis routing-engine
+                dataformat: xml
+                tolerance: 20
+                xpath: //route-engine-information/route-engine/memory-buffer-utilization
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}               
+                node: master
+                controller: master    
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_SIB_STATE
+# CMD: 
+#     - show chassis sibs
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                
+#### CHK_SIB_STATE
+        CHK_SIB_STATE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - mx
+                    - acx7509
+                trace: show-chassis-sibs
+                parameter: sib-link-state
+                command: show chassis sibs 
+                dataformat: xml
+                tolerance: 10
+                xpath: //sib[sib-link-state="Active"]/slot
+                expression: current == snapshot
+                database: ${True}               
+                node: master
+                controller: master    
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_MINOR_ALARM_COUNT
+#     - CHK_MAJOR_ALARM_COUNT
+# CMD: 
+#     - show chassis alarms
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#### CHK_MINOR_ALARM_COUNT
+        CHK_MINOR_ALARM_COUNT:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-alarms
+                parameter: minor-alarm-count
+                command: show chassis alarms
+                dataformat: xml
+                tolerance: 10
+                xpath: count(//alarm-detail[alarm-class="Minor"])
+                expression: current <= snapshot
+                database: ${True}               
+                node: master
+                controller: master    
+#### CHK_MAJOR_ALARM_COUNT  
+        CHK_MAJOR_ALARM_COUNT:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-chassis-alarms
+                parameter: major-alarm-count
+                command: show chassis alarms
+                dataformat: xml
+                tolerance: 10
+                xpath: count(//alarm-detail[alarm-class="Major"])
+                expression: current <= snapshot
+                database: ${True}               
+                node: master
+                controller: master                                       
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_JUNOS_PFE_STATE
+#     - CHK_EVO_PFE_STATE
+# CMD: 
+#     - show pfe terse
+# Supported OS: 
+#     - junos
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#### CHK_JUNOS_PFE_STATE
+        CHK_JUNOS_PFE_STATE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test   
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - evo
+                trace: show-pfe-terse-junos
+                parameter: pfe-state
+                command: show pfe terse
+                dataformat: xml
+                tolerance: 10
+                xpath: //pfe-information/pfe[mgmt-state="Online"]/slot-index
+                expression: current >= snapshot
+                database: ${True}               
+                node: master
+                controller: master                                                                
+#### CHK_EVO_PFE_STATE
+        CHK_EVO_PFE_STATE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test   
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                    - acx7509
+                trace: show-pfe-terse-evo
+                parameter: pfe-state
+                command: show pfe terse
+                dataformat: text
+                regexp: '\s+\d+\s+\d+\s+[\d\s,]+\s+(\w+)\s+\S+'
+                tolerance: 10
+                expression: current >= snapshot
+                database: ${True}               
+                node: master
+                controller: master                                                                        
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_EVO_SYS_PROCESS_CPU_ID
+#     - CHK_EVO_SYS_PROCESS_CPU_US
+#     - CHK_EVO_SYS_PROCESS_CPU_SY
+# CMD: 
+#     - show system processes extensive | match "^%Cpu|^KiB Mem|^KiB Swap"  
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#### CHK_EVO_SYS_PROCESS_CPU_ID
+        CHK_EVO_SYS_PROCESS_CPU_ID:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: evo-sh-sys-proc-ext
+                parameter: cpu-idle
+                command: show system processes extensive | match "^%Cpu|^KiB Mem|^KiB Swap|^MiB Mem|^MiB Swap"  
+                dataformat: text
+                regexp: '(\d+\.\d+)\s+id'
+                tolerance: 20
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master          
+#### CHK_EVO_SYS_PROCESS_CPU_US
+        CHK_EVO_SYS_PROCESS_CPU_US:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: evo-sh-sys-proc-ext
+                parameter: cpu-user
+                command: show system processes extensive | match "^%Cpu|^KiB Mem|^KiB Swap|^MiB Mem|^MiB Swap"  
+                dataformat: text
+                regexp: '(\d+\.\d+)\s+us'
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master                  
+#### CHK_EVO_SYS_PROCESS_CPU_SY
+        CHK_EVO_SYS_PROCESS_CPU_SY:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: evo-sh-sys-proc-ext
+                parameter: cpu-system
+                command: show system processes extensive | match "^%Cpu|^KiB Mem|^KiB Swap|^MiB Mem|^MiB Swap"  
+                dataformat: text
+                regexp: '(\d+\.\d+)\s+sy'
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master                          
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_FAB_TOPO_LINK_STATE_SOURCE
+#     - CHK_FAB_TOPO_LINK_STATE_DESTINATION
+# CMD: 
+#     - show chassis fabric topology 
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#### CHK_FAB_TOPO_LINK_STATE_SOURCE
+        CHK_FAB_TOPO_LINK_STATE_SOURCE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                    - acx7509
+                trace: show-chassis-fabric-topology
+                command: show chassis fabric topology
+                parameter: link-state-source
+                dataformat: xml
+                xpath: count(//fm-topo-link-sib/fm-topo-link-fchip/fm-topo-link-fcore/fm-topo-link-source[link-state-source="UP"])
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master          
+#### CHK_FAB_TOPO_LINK_STATE_DESTINATION
+        CHK_FAB_TOPO_LINK_STATE_DESTINATION:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                    - acx7509
+                trace: show-chassis-fabric-topology
+                command: show chassis fabric topology
+                parameter: link-state-destination
+                dataformat: xml
+                xpath: count(//fm-topo-link-sib/fm-topo-link-fchip/fm-topo-link-fcore/fm-topo-link-destination[link-state-destination="UP"])
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master                          
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_TASK_MEM_IN_USE
+#     - CHK_TASK_MEM_DYNA_ALLOCS
+# CMD: 
+#     - show task memory 
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#>>>>CHK_TASK_MEM_IN_USE
+        CHK_TASK_MEM_IN_USE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-task-memory
+                command: show task memory
+                parameter: task-memory-in-use-avail                
+                dataformat: xml
+                xpath: //task-memory-information/task-memory-in-use-avail
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master  
+        CHK_TASK_MEM_IN_USE_SIZE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-task-memory
+                command: show task memory
+                parameter: task-memory-in-use-size            
+                dataformat: xml
+                xpath: //task-memory-information/task-memory-in-use-size
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master                  
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_TASK_MEM_DETAIL_DYNA_ALLOCS
+#     - CHK_TASK_MEM_DETAIL_TOTAL_BYTES_IN_USE
+# CMD: 
+#     - show task memory detail
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#>>>>CHK_TASK_MEM_DETAIL_DYNA_ALLOCS
+        CHK_TASK_MEM_DETAIL_DYNA_ALLOCS:   
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-task-memory-detail
+                command: show task memory detail
+                parameter: task-memory-dynamic-alloc              
+                dataformat: xml
+                xpath: //task-memory-information/task-memory-dynamic-allocs
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master            
+#### CHK_TASK_MEM_DETAIL_TOTAL_BYTES_IN_USE
+        CHK_TASK_MEM_DETAIL_TOTAL_BYTES_IN_USE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-task-memory-detail
+                command: show task memory detail
+                parameter: task-memory-total-bytes-in-use          
+                dataformat: xml
+                xpath: //task-memory-information/task-memory-total-bytes-in-use
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master                                               
+#----------------------------------------------------------------------
+# TE Registration: CHK_SYSTEM_BUFFERS
+# Supported OS: 
+#    - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                         
+        CHK_SYSTEM_BUFFERS:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-buffers
+                parameter: current-mbufs
+                command: show system buffers
+                dataformat: xml
+                xpath: //memory-statistics/current-mbufs
+                tolerance: 20
+                expression: current <= ((100 + float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master          
+#----------------------------------------------------------------------
+# TE Registration: CHK_ACTIVE_ROUTES
+# Supported OS: 
+#    - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                         
+        CHK_ACTIVE_ROUTES:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-route-summary
+                parameter: total-active-routes
+                command: show route summary
+                dataformat: xml
+                xpath: sum(//route-summary-information/route-table/active-route-count)
+                tolerance: 10
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master           
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_PFE_IPV4_ACTIVE_ROUTES
+#     - CHK_PFE_IPV6_ACTIVE_ROUTES
+#     - CHK_PFE_MPLS_ACTIVE_ROUTES
+#     - CHK_PFE_CLNP_ACTIVE_ROUTES
+#     - CHK_PFE_CCC_ACTIVE_ROUTES
+#     - CHK_PFE_BRIDGE_ACTIVE_ROUTES
+# CMD: 
+#     - show route all summary
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+#        CHK_PFE_IPV4_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-ipv4-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'IPv4\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master 
+#        CHK_PFE_IPV6_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-ipv6-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'IPv6\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master                           
+#        CHK_PFE_MPLS_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-mpls-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'MPLS\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master                                           
+#        CHK_PFE_CLNP_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-clnp-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'CLNP\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master                                                           
+#        CHK_PFE_CCC_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-ccc-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'CCC\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master                                                                           
+#        CHK_PFE_BRIDGE_ACTIVE_ROUTES:
+#            UV-ARGS:
+#                provision-registration: 1
+#                te-ojects-to-register:
+#                    - longevity_test 
+#            TE-ARGS:
+#                resource_tag_include:
+#                    - longevity
+#                    - evo
+#                resource_tag_exclude:
+#                    - junos
+#                trace: show-route-all-summary
+#                parameter: total-bridge-active-routes
+#                command: show route all summary
+#                mode: fpc0
+#                dataformat: text
+#                regexp: 'BRIDGE\s+\d+\s+(\d+)'
+#                tolerance: 10
+#                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+#                database: ${True}            
+#                node: master
+#                controller: master                                                                                       
+#----------------------------------------------------------------------
+# TE Registration: IFSMON_CHK
+# Supported OS: 
+#    - Junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                                              
+        IFSMON_CHK:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - evo
+                trace: ifsmon-chk
+                parameter: ifsmon-statesacked
+                mode: root
+                command: ifsmon -c
+                dataformat: text
+                tolerance: 0
+                regexp: '[.|\n]*\S+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+.\d+\s+(\d+\.\d+)'
+                expression: current == 100.000
+                database: ${True}            
+                node: master
+                controller: master      
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_PLATFORM_DEPENDENCY_STATE
+# CMD: 
+#     - show platform dependency-state summary
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+####CHK_PLATFORM_DEPENDENCY_STATE
+        CHK_PLATFORM_DEPENDENCY_STATE:   
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: show-plat-dep-state-summary
+                command: show platform dependency-state summary
+                parameter: dep-status-ok-count              
+                dataformat: xml
+                xpath: count(//dep-summary-info/dep-summary[dep-status="OK"]/dep-application)
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master            
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_SYSTEM_NODE_STATE
+# CMD: 
+#     - show system nodes
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+####CHK_SYSTEM_NODE_STATE
+        CHK_SYSTEM_NODE_STATE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: show-system-nodes
+                command: show system nodes
+                parameter: node-state             
+                dataformat: xml
+                xpath: //system-nodes-info-entry[system-node-info-node-status="online, apps-ready"]/system-node-info-node-name
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master                    
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_APP_STATUS_01
+#     - CHK_APP_STATUS_02
+# CMD: 
+#     - show system applications
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+####CHK_APP_STATUS_01
+        CHK_APP_STATUS_01:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: show-system-apps
+                command: show system applications
+                parameter: app-online-ready         
+                dataformat: xml
+                xpath: count(//system-applications-info-entry[system-application-state="online ready "]/system-application-name)
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master                            
+####CHK_APP_STATUS_02
+        CHK_APP_STATUS_02:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - junos
+                trace: show-system-apps
+                command: show system applications
+                parameter: app-online-ready-active         
+                dataformat: xml
+                xpath: count(//system-applications-info-entry[system-application-state="online ready active "]/system-application-name)
+                expression: current >= snapshot
+                database: ${True}            
+                node: master
+                controller: master                                            
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_MINOR_ERROR_COUNT
+#     - CHK_MAJOR_ERROR_COUNT
+#     - CHK_FATAL_ERROR_COUNT
+# CMD: 
+#     - show system errors active
+# Supported OS: 
+#     - evo
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+####CHK_MINOR_ERROR_COUNT
+        CHK_MINOR_ERROR_COUNT:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-system-errors-active
+                command: show system errors active
+                parameter: minor-error-count
+                dataformat: xml
+                xpath: sum(//minor-occur-count)
+                expression: current <= snapshot
+                database: ${True}            
+                node: master
+                controller: master                                    
+####CHK_MAJOR_ERROR_COUNT
+        CHK_MAJOR_ERROR_COUNT:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-system-errors-active
+                command: show system errors active
+                parameter: major-error-count
+                dataformat: xml
+                xpath: sum(//major-occur-count)
+                expression: current <= snapshot
+                database: ${True}            
+                node: master
+                controller: master                                                    
+####CHK_FATAL_ERROR_COUNT
+        CHK_FATAL_ERROR_COUNT:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                resource_tag_exclude:
+                    - none
+                trace: show-system-errors-active
+                command: show system errors active
+                parameter: fatal-error-count
+                dataformat: xml
+                xpath: sum(//fatal-occur-count)
+                expression: current <= snapshot
+                database: ${True}            
+                node: master
+                controller: master                                                    
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - CHK_SYSTEM_MEMORY_FREE
+# CMD: 
+#     - show system memory
+# Supported OS: 
+#     - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------  
+# ***** CHK_SYSTEM_MEMORY_FREE ***** #
+        CHK_SYSTEM_MEMORY_FREE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - junos
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-memory-cli
+                command: show system memory
+                parameter: system-memory-free
+                dataformat: xml
+                xpath: //system-memory-information/system-memory-summary-information/system-memory-free
+                tolerance: 20
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot                 
+                database: ${True}            
+                node: master
+                controller: master   
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - TE_MONITOR_SYSTEM_PROCESS_EXT_MEM_FREE
+# CMD: 
+#     - show system processes extensive | match "Mem"
+# Supported OS: 
+#     - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------   
+        TE_MONITOR_SYSTEM_PROCESS_EXT_MEM_FREE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - junos
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-proc-ext
+                command: show system processes extensive | match "^Mem"
+                parameter: mem-free
+                dataformat: text
+                regexp: '(\w+)\s+Free'
+                tolerance: 20
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master               
+#----------------------------------------------------------------------
+# CMD: 
+#     - show system virtual-memory
+# Supported OS: 
+#     - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------       
+##TE_MONITOR_VM_KMEM_MAP_FREE
+        TE_MONITOR_VM_KMEM_MAP_FREE:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - junos
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-virtual-memory
+                command: show system virtual-memory
+                parameter: vm-kmem-map-free
+                dataformat: xml
+                xpath: //system-virtual-memory-information/vm-kernel-state/vm-kmem-map-free
+                tolerance: 20
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}            
+                node: master
+                controller: master
+#----------------------------------------------------------------------
+# TE Registrations: 
+#     - lng_chk_fpc_heap_memory
+#     - lng_chk_fpc_pfe_nh_memory
+#     - lng_chk_fpc_pfe_fw_memory
+# CMD: 
+#     - show system resource-monitor fpc
+# Supported OS: 
+#     - junos
+# Revision History:
+# Name            Date          change details    
+# apenjuri                      Intially Authored
+#----------------------------------------------------------------------                                              
+#### LNG_CHK_FPC_HEAP_MEMORY
+        LNG_CHK_FPC_FREE_HEAP_MEMORY:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - mx
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-resource-monitor-fpc
+                parameter: res-mon-fpc-free-heap
+                command: show system resource-monitor fpc
+                dataformat: xml
+                tolerance: 20
+                xpath: //resource-monitor-fpc-information/resource-monitor-fpc-information-summary/free-heap-memory-rsmon-percent 
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}
+                node: master
+                controller: master
+        LNG_CHK_FPC_PFE_FREE_NH_MEMORY:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - mx
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-resource-monitor-fpc
+                parameter: res-mon-fpc-pfe-free-nh
+                command: show system resource-monitor fpc
+                dataformat: xml
+                tolerance: 20
+                xpath: //resource-monitor-fpc-information/resource-monitor-fpc-information-summary/resource-monitor-fpc-pfe-information-summary/free-nh-memory-rsmon-percent
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}
+                node: master
+                controller: master               
+        LNG_CHK_FPC_PFE_FREE_FW_MEMORY:
+            UV-ARGS:
+                provision-registration: 1
+                te-ojects-to-register:
+                    - lrm_baseline
+                    - longevity_test
+            TE-ARGS:
+                resource_tag_include:
+                    - longevity
+                    - mx
+                resource_tag_exclude:
+                    - evo
+                trace: show-system-resource-monitor-fpc
+                parameter: res-mon-fpc-pfe-free-fw
+                command: show system resource-monitor fpc
+                dataformat: xml
+                tolerance: 20
+                xpath: //resource-monitor-fpc-information/resource-monitor-fpc-information-summary/resource-monitor-fpc-pfe-information-summary/free-filter-memory-rsmon-percent
+                expression: current >= ((100 - float(tolerance)) / 100) * snapshot
+                database: ${True}
+                node: master
+                controller: master    
+#----------------------------------------------------------------------     
+                           
