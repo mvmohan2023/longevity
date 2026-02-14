@@ -25,6 +25,7 @@ from itertools import zip_longest
 from jnpr.toby.utils.Vars import Vars
 from jnpr.toby.utils.pytest_utils.pytest_utils import topology_init
 topology_init()
+sys.path.insert(0, '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted')
 from PDT_LONGEVITY_LIB import *
 from jnpr.jpytest import Jpytest
 

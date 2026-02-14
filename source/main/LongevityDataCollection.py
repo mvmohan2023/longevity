@@ -69,15 +69,11 @@ class LongevityDataCollection:
         self.junos_non_ulc_fpc_shell_responses={}
         
         
-        
-        
-        
-        
-        
-        
     
-    
-
+    def is_evo(self, device, testbed):
+        osname =  testbed.get_t(resource=device, attribute='flavor') 
+        #osname = testbed.get_t(resource=device, controller='re0', attribute='osname')
+        return osname.lower() == 'evo'
    
     
     def execute_parallel(self, handles:list):
@@ -181,7 +177,10 @@ class LongevityDataCollection:
         #if dev in self.handles_dict:
         #    channel_list=self.handles_dict[dev]
         #    for channel in channel_list:
-        if not dev_hdl.is_evo():
+        #osname =  testbed.get_t(resource=dev, controller='re0', attribute='osname') 
+        #if not dev_hdl.is_evo():
+        #if osname.lower() == 'junos':
+        if not self.is_evo(dev, t):
             reconnect_channel(device=dev_hdl, timeout=360, interval=10, all=True)
         
         rtr_model = device_get_model(dev_hdl).lower()
@@ -197,7 +196,7 @@ class LongevityDataCollection:
                 channel_name=f"{node}_cli"
                 #if channel_name not in channel_list:
                 create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     switch_to_su(device=dev_hdl, channel_name=channel_name)
                 channel_list.append(channel_name)
             except Exception as err:
@@ -205,7 +204,7 @@ class LongevityDataCollection:
               
                 reconnect_channel(device=dev_hdl, timeout=360, interval=10, all=True)
                 create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     switch_to_su(device=dev_hdl, channel_name=channel_name)
                 channel_list.append(channel_name)
                 #return
@@ -216,25 +215,25 @@ class LongevityDataCollection:
                 #if channel_name not in channel_list:
                 channel_name=f"{node}_shell"
                 create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     switch_to_su(device=dev_hdl, channel_name=channel_name)
                 channel_list.append(channel_name)
             except Exception as err:
                 t.log('ERROR', "failed to create the handle {}".format(err))
                 reconnect_channel(device=dev_hdl, timeout=360, interval=10, all=True)
                 create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     switch_to_su(device=dev_hdl, channel_name=channel_name)
                 channel_list.append(channel_name)
                 #return
                 
             #time.sleep(60)
-            if not dev_hdl.is_evo() and 'fpc' in node:
+            if not self.is_evo(dev, t) and 'fpc' in node:
                 try:
                     channel_name=f"{node}_vty"
                     #if channel_name not in channel_list:
                     create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                    if dev_hdl.is_evo():
+                    if self.is_evo(dev, t):
                         switch_to_su(device=dev_hdl, channel_name=channel_name)
                     #self.handles_dict[dev].append(f"{node}_vty")
                     #self.handles_dict[f"{node}_vty"]=channel_hdl
@@ -243,7 +242,7 @@ class LongevityDataCollection:
                     t.log('ERROR', "failed to create the handle {}".format(err))
                     reconnect_channel(device=dev_hdl, timeout=360, interval=10, all=True)
                     create_new_hdl(device=dev_hdl, channel_type='text', channel_name=channel_name)
-                    if dev_hdl.is_evo():
+                    if self.is_evo(dev, t):
                         switch_to_su(device=dev_hdl, channel_name=channel_name)
                     channel_list.append(channel_name)
                     #return
@@ -254,7 +253,7 @@ class LongevityDataCollection:
         
         for channel in channel_list:
             if re_cli_pattern.search(channel):
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     re_cli_cmds=self.build_evo_re_cmds_list
                 else:
                     re_cli_cmds=self.build_junos_re_cmds_list
@@ -262,7 +261,7 @@ class LongevityDataCollection:
                 self.list_of_dicts.append({'fname': self.execute_re_cli_commands, 
                             'kwargs': {'dev': dev, 'text_channel':channel,'re_cli_cmds':re_cli_cmds}})
             if re_shell_pattern.search(channel):
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     re_shell_cmds=self.build_evo_re_shell_cmds_list
                 else:
                     re_shell_cmds=self.build_junos_shell_cmds_list
@@ -273,14 +272,14 @@ class LongevityDataCollection:
                 print("mmmmmmmm")
                 found=fpc_cli_pattern.search(channel)
                 fpc=found.group(1)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     self.list_of_dicts.append({'fname':self.execute_fpc_cli_commands,
                                 'kwargs': {'dev': dev, 'fpc':fpc, 'text_channel':channel}})
                 print("kkkkkkkk")
             if fpc_shell_pattern.search(channel):
                 found=fpc_shell_pattern.search(channel)
                 fpc=found.group(1)
-                if dev_hdl.is_evo():
+                if self.is_evo(dev, t):
                     self.list_of_dicts.append({'fname':self.execute_fpc_shell_commands,
                                 'kwargs': {'dev': dev, 'fpc':fpc, 'text_channel':channel}})
                 else:
@@ -603,7 +602,7 @@ class LongevityDataCollection:
             is_rtr_qfx=True 
         if 'qfx5100' in rtr_model:
             is_rtr_qfx5100=True 
-        if not (is_rtr_ex or is_rtr_qfx5100 or is_rtr_qfx) or dev_hdl.is_evo(): 
+        if not (is_rtr_ex or is_rtr_qfx5100 or is_rtr_qfx) or self.is_evo(rtr, t): 
             return fetch_system_time(device=dev_hdl)
             
         
@@ -642,7 +641,7 @@ class LongevityDataCollection:
             dev_hdl = t.get_handle(resource=rtr)
             rtr_model = device_get_model(dev_hdl).lower()
             
-            if dev_hdl.is_evo():
+            if self.is_evo(rtr, t):
                 self.build_evo_fpc_cli_pfe_cmds_list[rtr]={}
                 self.build_evo_fpc_shell_control_cmds_list[rtr]={}
                 self.build_evo_fpc_shell_cmds_list[rtr]={}

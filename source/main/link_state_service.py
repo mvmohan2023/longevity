@@ -10,6 +10,7 @@ gNMI link-state monitor using gnmic with:
 - periodic per-target health reporter (PeriodicHealthReporter) with optional stop_all()
 - minimal CLI for local foreground runs: start/tail/check
 - duplicate event suppression (dedupe) with TTL
+- OPTIONAL HTML snapshots in PeriodicHealthReporter (fmt="html")
 
 Python 3.8+
 """
@@ -29,6 +30,7 @@ import time
 from dataclasses import dataclass, asdict
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Optional, Pattern, Tuple, Any
+import html as _html  # <-- NEW: for HTML escaping in reporter
 
 # -------------------------
 # Optional Paramiko
@@ -57,7 +59,7 @@ DOWN_STATES = {"DOWN", "LOWER_LAYER_DOWN", "DORMANT", "NOT_PRESENT", "UNKNOWN", 
 
 # 2025-09-15T13:50:43 | LINK-STATE | iface=et-0/0/10:0 state=DOWN (prev=None)
 LOG_LINE_RE = re.compile(
-    r"^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}) \| LINK-STATE \| iface=(?P<iface>[^ ]+) state=(?P<state>[A-Z_]+) \(prev=(?P<prev>[^)]*)\)$"
+    r"^(?P<ts>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?) \| LINK-STATE \| iface=(?P<iface>[^ ]+) state=(?P<state>[A-Z_]+) \(prev=(?P<prev>[^)]*)\)$"
 )
 
 # -------------------------
@@ -85,9 +87,9 @@ def _parse_event_obj(obj: dict, out_format: str) -> Optional[Tuple[str, str, str
 
     ts = obj.get("timestamp")
     iso_ts = (
-        datetime.fromtimestamp(ts / 1e9).isoformat(timespec="seconds")
+        datetime.fromtimestamp(ts / 1e9).isoformat(timespec="microseconds")
         if isinstance(ts, int) and ts > 0
-        else datetime.now().isoformat(timespec="seconds")
+        else datetime.now().isoformat(timespec="microseconds")
     )
 
     if out_format == "event":
@@ -171,6 +173,7 @@ def _get_events_from_log(
             m = LOG_LINE_RE.match(line.strip())
             if not m:
                 continue
+            # allow fractional seconds in ts
             ts = datetime.fromisoformat(m.group("ts"))
             if cutoff and ts < cutoff:
                 continue
@@ -221,7 +224,7 @@ class MonitorConfig:
     debug: bool = False
     log_file: str = "./link_state_monitor.log"
     restart: bool = True
-    if_filter: Optional[str] = None  # regex
+    if_filter: Optional[str] = None  # regex (NOTE: we do not filter mgmt unless you set it)
     on_event: Optional[Callable[[str, str, str, Optional[str]], None]] = None
     # ---- dedupe controls ----
     dedupe_enabled: bool = True
@@ -635,8 +638,7 @@ class RemoteMonitorManager:
                         return {"error": "already_running", "pids": pids}
                     self.kill_all_for_target(cli)
 
-            # --- Detect whether remote script supports dedupe flags ---
-            # We run: python3 /opt/linkmon/link_state_service.py start --help
+            # detect dedupe flags support (optional)
             help_cmd = (
                 f"bash -lc {shlex.quote(self.remote_python + ' ' + self.remote_module_path + ' start --help || true')}"
             )
@@ -669,7 +671,6 @@ class RemoteMonitorManager:
             if cfg.if_filter:
                 args += ["--if-filter", shlex.quote(cfg.if_filter)]
 
-            # Only pass dedupe flags if the remote script supports them
             if dedupe_supported:
                 if not cfg.dedupe_enabled:
                     args += ["--no-dedupe"]
@@ -678,8 +679,7 @@ class RemoteMonitorManager:
 
             start_cmd = " ".join(args)
 
-            # Ensure gnmic is found even in a non-login, non-interactive shell
-            # (extend PATH to common locations, then nohup)
+            # Ensure gnmic PATH in non-login shell; nohup to background
             nohup = (
                 "bash -lc " +
                 shlex.quote(
@@ -698,11 +698,10 @@ class RemoteMonitorManager:
         finally:
             cli.close()
 
-
     def stop(self) -> dict:
         cli = self._connect()
         try:
-            # kill process from PID file, if any
+            # pidfile
             rc, out, _ = self._exec(cli, f"bash -lc 'test -f {shlex.quote(self.remote_pid)} && cat {shlex.quote(self.remote_pid)}'")
             pid = out.strip() if rc == 0 and out.strip() else None
             if pid:
@@ -710,13 +709,11 @@ class RemoteMonitorManager:
                 self._exec(cli, f"bash -lc 'rm -f {shlex.quote(self.remote_pid)}'")
             # ensure no stragglers
             killed = self.kill_all_for_target(cli)
-            # wait a bit for them to exit
             deadline = time.time() + 5.0
             remaining = self._pgrep_pids(cli)
             while remaining and time.time() < deadline:
                 time.sleep(0.3)
                 remaining = self._pgrep_pids(cli)
-            # escalate if still there
             if remaining:
                 pat = self._target_pattern()
                 if pat:
@@ -904,12 +901,12 @@ class RemoteMultiMonitor:
         return self._mgr_for(addr).tail_log(n)
 
 # -------------------------
-# Periodic health reporter (self-contained)
+# Periodic health reporter
 # -------------------------
 class PeriodicHealthReporter:
     """
     Periodically snapshots per-target health/updates/tail using RemoteMultiMonitor,
-    without stopping the monitors. Writes text/json/jsonl directly with per-run file names.
+    without stopping the monitors. Writes text/json/jsonl/HTML with per-run file names.
     Can optionally stop remote monitors in stop().
     """
     def __init__(
@@ -917,14 +914,14 @@ class PeriodicHealthReporter:
         rmm: "RemoteMultiMonitor",
         targets: List[str],
         out_dir: str = "/var/log",
-        fmt: str = "jsonl",             # "jsonl" | "json" | "text"
+        fmt: str = "jsonl",             # "jsonl" | "json" | "text" | "html"
         interval_sec: int = 60,
         since: Optional[str] = None,    # default: ~2x interval in minutes
         tail_lines: int = 20,
         truncate_first: bool = False,   # overwrite files on the first run
         also_print: bool = False,
         run_id: Optional[str] = None,   # per-run file suffix
-        stop_monitors_on_stop: bool = False,  # stop rmm monitors on reporter.stop()
+        stop_monitors_on_stop: bool = False,  # stop rmm monitors on rep.stop()
     ):
         self.rmm = rmm
         self.targets = targets
@@ -946,6 +943,104 @@ class PeriodicHealthReporter:
         self._stop_evt = None
         self._ran_once = False
 
+    # ---- HTML helpers (NEW) ----
+    def _esc(self, s):
+        return _html.escape(str(s)) if s is not None else ""
+
+    def _render_html(self, addr, ts, since, status, updates, tail_out, refresh_sec):
+        head = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="refresh" content="{int(max(5, refresh_sec))}">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LinkMon — {self._esc(addr)}</title>
+<style>
+ body{{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:16px;color:#111}}
+ h1{{font-size:20px;margin:0 0 8px}}
+ .sub{{color:#666;margin:0 0 16px}}
+ table{{border-collapse:collapse;width:100%;margin:8px 0}}
+ th,td{{border:1px solid #ddd;padding:6px 8px;font-size:14px;vertical-align:top}}
+ th{{background:#f6f6f6;text-align:left}}
+ code,pre{{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}}
+ .pill{{display:inline-block;border-radius:999px;padding:2px 8px;border:1px solid #ddd;font-size:12px}}
+ .ok{{background:#e9f7ef;border-color:#bde5c8}}
+ .warn{{background:#fff5e6;border-color:#ffd699}}
+ .bad{{background:#fdecea;border-color:#f5c2bf}}
+ .muted{{color:#777}}
+</style>
+</head>
+<body>
+<h1>Link State — {self._esc(addr)}</h1>
+<p class="sub">Snapshot at <b>{self._esc(ts)}</b> • window <b>{self._esc(since)}</b></p>
+"""
+        running = bool(status.get("running"))
+        pid = status.get("pid") or "—"
+        last_log = status.get("last_log") or "—"
+        log_path = status.get("log_path") or "—"
+
+        updates_flag = updates.get("updates")
+        updates_count = updates.get("count", 0)
+        sample = updates.get("sample") or []
+
+        run_pill_cls = "ok" if running else "bad"
+        up_pill_cls = "warn" if updates_flag else "ok"
+
+        status_html = f"""
+<table>
+  <tr><th colspan="2">Status</th></tr>
+  <tr><td>Running</td><td><span class="pill {run_pill_cls}">{'True' if running else 'False'}</span></td></tr>
+  <tr><td>PID</td><td><code>{self._esc(pid)}</code></td></tr>
+  <tr><td>Log Path</td><td><code>{self._esc(log_path)}</code></td></tr>
+  <tr><td>Last Log</td><td><code>{self._esc(last_log)}</code></td></tr>
+</table>
+"""
+
+        if sample:
+            rows = "\n".join(
+                f"<tr><td>{self._esc(ev.get('timestamp'))}</td>"
+                f"<td><code>{self._esc(ev.get('iface'))}</code></td>"
+                f"<td><b>{self._esc(ev.get('state'))}</b></td>"
+                f"<td><code>{self._esc(ev.get('prev'))}</code></td></tr>"
+                for ev in sample
+            )
+            updates_html = f"""
+<table>
+  <tr><th colspan="4">Updates (since {self._esc(since)}) <span class="pill {up_pill_cls}">{'YES' if updates_flag else 'NO'}</span> • count={int(updates_count)}</th></tr>
+  <tr><th>Time</th><th>Interface</th><th>State</th><th>Prev</th></tr>
+  {rows}
+</table>
+"""
+        else:
+            msg = ("No link-down events in the window."
+                   if not updates_flag else f"Updates={updates_count} (details unavailable)")
+            updates_html = f"""
+<table>
+  <tr><th>Updates (since {self._esc(since)})</th></tr>
+  <tr><td class="muted">{self._esc(msg)}</td></tr>
+</table>
+"""
+
+        if tail_out:
+            tail_pre = _html.escape("\n".join(tail_out))
+            tail_html = f"""
+<table>
+  <tr><th>Tail (last N lines)</th></tr>
+  <tr><td><pre>{tail_pre}</pre></td></tr>
+</table>
+"""
+        else:
+            tail_html = """
+<table>
+  <tr><th>Tail</th></tr>
+  <tr><td class="muted">—</td></tr>
+</table>
+"""
+
+        end = "</body></html>"
+        return head + status_html + updates_html + tail_html + end
+
+    # ---- lifecycle ----
     def start(self):
         if self._t and self._t.is_alive():
             return
@@ -994,7 +1089,7 @@ class PeriodicHealthReporter:
 
     def _write_file(self, content: str, preferred_path: str, slug: str, truncate: bool) -> str:
         mode = "w" if truncate else "a"
-        if not content.endswith("\n"):
+        if not content.endswith("\n") and not preferred_path.endswith(".html"):
             content += "\n"
         try:
             d = os.path.dirname(preferred_path) or "."
@@ -1005,7 +1100,7 @@ class PeriodicHealthReporter:
         except PermissionError:
             fb_dir = os.path.join(os.path.expanduser("~"), "linkmon_admin")
             os.makedirs(fb_dir, exist_ok=True)
-            ext = ".jsonl" if preferred_path.endswith(".jsonl") else ".log"
+            ext = ".jsonl" if preferred_path.endswith(".jsonl") else (".html" if preferred_path.endswith(".html") else ".log")
             fb_path = os.path.join(fb_dir, f"{slug}_linkmon_admin_{self.run_id}{ext}")
             with open(fb_path, mode, encoding="utf-8") as fh:
                 fh.write(content)
@@ -1053,6 +1148,22 @@ class PeriodicHealthReporter:
                 self._write_file(body, path, slug, truncate=truncate_now)
                 if self.also_print:
                     print(pretty)
+
+            elif self.fmt == "html":
+                path = f"{self.out_dir}/{slug}_linkmon_admin_{self.run_id}.html"
+                html_doc = self._render_html(
+                    addr=addr,
+                    ts=ts,
+                    since=self.since,
+                    status=status,
+                    updates=updates,
+                    tail_out=tail_out,
+                    refresh_sec=self.interval,
+                )
+                # for HTML we always rewrite the file so the page is current
+                self._write_file(html_doc, path, slug, truncate=True)
+                if self.also_print:
+                    print(f"[HTML] wrote {path}")
 
             else:  # "text"
                 path = f"{self.out_dir}/{slug}_linkmon_admin_{self.run_id}.log"
