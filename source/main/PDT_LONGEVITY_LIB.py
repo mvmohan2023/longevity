@@ -14,7 +14,7 @@ import ipaddress
 import random
 import inspect
 from lxml import etree
-from datetime import datetime
+from typing import Tuple
 from datetime import datetime
 import time
 import subprocess
@@ -35,6 +35,7 @@ from jnpr.toby.utils.Vars import Vars
 from datetime import datetime
 from PDT_TE_PROCESSOR import *
 # Import the class
+sys.path.append('brcm_snapshot.py')
 from brcm_snapshot import BRCMDataCollector
 #from tv import get as tv.get
 sys.path.append('LongevityDashboard.py')
@@ -66,6 +67,7 @@ eo = Event(name="eo")
 
 from typing import Tuple  # <-- Python < 3.9: use typing.Tuple
 
+sys.path.append('link_state_service.py')
 from link_state_service import (
     MonitorConfig,
     RemoteMultiMonitor,
@@ -83,56 +85,71 @@ TARGETS = [
     "10.83.6.3:50051",
     "10.83.6.21:50051",
 ]
+#ipclos
 TARGETS_DICT = {
-    "10.83.6.3": "10.83.6.3:50054",
-    "10.83.6.4": "10.83.6.4:50052",
-    "10.83.6.30": "10.83.6.30:50053",
-    "10.83.6.28": "10.83.6.28:50051",
-    "10.83.6.5": "10.83.6.5:50055",
-    "10.83.6.25": "10.83.6.25:50056",
-    "10.83.6.32": "10.83.6.32:50057",
-    "10.83.6.21": "10.83.6.21:50058",
-    "10.83.6.9": "10.83.6.9:50059"
+    "10.83.6.3": "10.83.6.3:60063",
+    "10.83.6.4": "10.83.6.4:60064",
+    "10.83.6.30": "10.83.6.30:60065",
+    "10.83.6.28": "10.83.6.28:60061",
+    "10.83.6.5": "10.83.6.5:60062",
+    "10.83.6.25": "10.83.6.25:60066",
+    "10.83.6.32": "10.83.6.32:60069",
+    "10.83.6.21": "10.83.6.21:60067",
+    "10.83.6.9": "10.83.6.9:60068"
 }
 
-SAMPLES = 3                 # run the service 3 times
-SAMPLE_DURATION_SEC = 100   # 5 minutes per sample
-SAMPLE_GAP_SEC = 5          # small idle gap between samples
+#yucen setup
+#TARGETS_DICT= {
+#    "10.48.41.78": "10.48.41.78:60051",
+#    "10.48.42.213": "10.48.42.213:50051",
+#    "10.48.42.113": "10.48.42.113:60053",
+#    "10.48.40.164": "10.48.40.164:60054"
+#}
 
-REPORT_INTERVAL_SEC = 180    # reporter cadence
-REPORT_SINCE = "4m"         # window for "updates since"
-REPORT_FMT = "text"         # "text" | "json" | "jsonl"
-REPORT_OUT_DIR = "/tmp" # snapshots written on the controller host
+SAMPLES = 3                   # run 3 samples
+SAMPLE_DURATION_SEC = 300     # 5 minutes per sample
+SAMPLE_GAP_SEC = 5            # <-- REQUIRED: gap between samples
 
-DEPLOY_MODULE = True        # push local link_state_service.py to remote before first sample
+REPORT_INTERVAL_SEC = 60
+REPORT_FMT = "html"          # better for parsing snapshots
+REPORT_OUT_DIR = "/tmp"
+DEPLOY_MODULE = True
+TEST_ID = "longevity_run"
+REPORT_TAIL_LINES = 0
 
-# Optional tag to group runs by test
+DEPLOY_MODULE = True
 TEST_ID = "longevity_run"
 
 # -------------------------
 # Helpers
 # -------------------------
 def make_run_id(sample_idx: int) -> str:
-  
+    #ts = datetime.now().strftime("%Y%m%d_%H-%M-%S")
     ts = datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S")
     return f"{TEST_ID}_sample{sample_idx}_{ts}"
 
-def start_sample(sample_idx: int, targets: list, log_output_dir: str) -> Tuple[RemoteMultiMonitor, PeriodicHealthReporter, str]:
+def _since_from_interval(interval_sec: int) -> str:
+    """Use ~2× interval as the 'since' window: expressed in minutes."""
+    mins = max(1, int(round((interval_sec * 2) / 60.0)))
+    return f"{mins}m"
+
+# -------------------------
+# Per-sample lifecycle
+# -------------------------
+def start_sample(sample_idx: int, targets, report_out_dir) -> Tuple[RemoteMultiMonitor, PeriodicHealthReporter, str]:
     run_id = make_run_id(sample_idx)
 
-    # Base gnmic subscribe config; applied per target
     base_cfg = MonitorConfig(
-        address="unused",                 # filled per-target internally
+        address="unused",          # filled per-target internally
         username="root",
         password="Embe1mpls",
         out_format="json",
         updates_only=True,
         insecure=True,
         alert_any=True,
-        debug=True,
+        debug=False,               # flip to True for deep diagnosis
     )
 
-    # Remote controller for this sample (unique run_id → unique remote logs)
     rmm = RemoteMultiMonitor(
         host=REMOTE_HOST,
         username=REMOTE_USER,
@@ -148,51 +165,46 @@ def start_sample(sample_idx: int, targets: list, log_output_dir: str) -> Tuple[R
         rmm.deploy("link_state_service.py")
 
     started = rmm.start_all(singleton_mode="kill")
-    print(f"[INFO] Sample {sample_idx}: started ->", started, flush=True)
+    print(f"[INFO] Sample {sample_idx}: started -> {started}", flush=True)
+    time.sleep(1.0)  # small settle time
 
     rep = PeriodicHealthReporter(
         rmm,
         targets,
-        out_dir=log_output_dir,
+        out_dir=report_out_dir,
         fmt=REPORT_FMT,
         interval_sec=REPORT_INTERVAL_SEC,
-        since=REPORT_SINCE,
-        tail_lines=20,
-        truncate_first=True,     # first tick overwrites the output file for this run_id
+        since=_since_from_interval(REPORT_INTERVAL_SEC),
+        tail_lines=REPORT_TAIL_LINES,   # 0 keeps snapshots quiet
+        truncate_first=True,
         also_print=False,
-        run_id=run_id,           # keep reporter files aligned with sample run_id
-        stop_monitors_on_stop=True,
+        run_id=run_id,
+        stop_monitors_on_stop=True,     # reporter.stop() will stop all remote monitors
     )
     rep.start()
     return rmm, rep, run_id
 
-def stop_sample(rmm: RemoteMultiMonitor, rep: PeriodicHealthReporter, sample_idx: int, run_id: str, targets: list, log_dir:str) -> None:
-    rep.stop()  # stops reporter AND remote monitors (flag above)
+def stop_sample(
+    rmm: RemoteMultiMonitor,
+    rep: PeriodicHealthReporter,
+    sample_idx: int,
+    run_id: str,
+    targets: list,
+    log_dir: str,
+) -> None:
+    # stops reporter AND remote monitors (per stop_monitors_on_stop flag)
+    rep.stop()
     try:
         status = rmm.status_all()
     except Exception:
         status = {}
     print(f"[INFO] Sample {sample_idx}: final status -> {status}", flush=True)
 
-    # Print per-target remote log paths (handy for fetching)
+    # Print per-target remote log paths for convenience
     for addr in targets:
         slug = addr.replace(".", "_").replace(":", "_")
         remote_log = f"{log_dir}/link_state_monitor_{slug}_{run_id}.log"
         print(f"[INFO] Remote log for {addr}: {remote_log}", flush=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def LLOG(message, level='INFO', console='True',**kwargs):
@@ -463,7 +475,7 @@ def build_pfe_instances_data_for_fpc_on_junos_rtr(rtr, **kwargs):
     self = kwargs.get("self", None)
     setattr(self, f"pfe_instances_of_fpc_{rtr}", {})
 
-    nodes_data = JUNOS_Get_Node_List(rtr, **{"self": self})
+    nodes_data = junos_get_node_list(rtr, **{"self": self})
     fpc_list = nodes_data["fpc_list"]
     rh = testbed.get_handle(resource=rtr)
     rtr_model = device_utils.get_model_for_device(device=rh).lower()
@@ -739,9 +751,9 @@ def longevity_te_reg_task_memory_detail_on_rtr(rtr, **kwargs):
             "xpath": f"//task-memory-allocator-report/task-block-list/task-block[tb-name='{tb_name}']/tb-alloc-bytes"
         })
 
-        lrm_baseline.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
         
-        te_longevity_test.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(level="INFO", message=f"[INFO] Registered task block tb-alloc-bytes for {tb_name} on {rtr}", console=True)
 
@@ -768,8 +780,8 @@ def longevity_te_reg_task_memory_detail_on_rtr(rtr, **kwargs):
             "xpath": f"//task-memory-malloc-usage-report/task-malloc-list/task-malloc[tm-name='{tm_name}']/tm-alloc-bytes"
         })
 
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(level="INFO", message=f"[INFO] Registered task malloc tm-alloc-bytes for {tm_name} on {rtr}", console=True)
         
@@ -815,8 +827,8 @@ def longevity_te_reg_re_system_memory(rtr, node, **kwargs):
             sys_dict['tolerance'] = tolerance
         
         testbed.log("INFO: Processing system memory stats", display_log=True)
-        lrm_baseline.register(**sys_dict)  
-        te_longevity_test.register(**sys_dict)
+        #lrm_baseline.register(**sys_dict)  
+        #te_longevity_test.register(**sys_dict)
         testbed.log(f"INFO: [${rtr}] [${node}] Registered show system memory - ${parameter}",  display_log=True)
 
 def EVO_Get_Anomalies_Check_App_List(rtr, node, **kwargs):
@@ -881,8 +893,8 @@ def longevity_te_reg_platform_anomalies(rtr, node, **kwargs):
             "xpath": f'//object-info-anomalies-summaries/object-info-anomalies-summary[object-application="{app}"]/object-complete-deleted'
         })
 
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(f"INFO: [{rtr}] [{node}] Registered {app} for Anomalies BQ complete-deleted", display_log=True)
         testbed.log(f"INFO: [{rtr}] [{node}] Registering {app} for Anomalies Publish publish-deleted", display_log=True)
@@ -892,8 +904,8 @@ def longevity_te_reg_platform_anomalies(rtr, node, **kwargs):
             "xpath": f'//object-info-anomalies-summaries/object-info-anomalies-summary[object-application="{app}"]/object-unpublish-undeleted'
         })
 
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(f"INFO: [{rtr}] [{node}] Registered {app} for Anomalies Publish publish-deleted", display_log=True)
 
@@ -942,8 +954,8 @@ def evo_re_memory_used_te_registration(rtr, node, **kwargs):
         "database": True
     }
 
-    lrm_baseline.register(**te_dict)
-    te_longevity_test.register(**te_dict)
+    #lrm_baseline.register(**te_dict)
+    #te_longevity_test.register(**te_dict)
 
     testbed.log(f"INFO: [{rtr}] [{node}] Registered with system memory used", display_log=True)
 
@@ -1025,8 +1037,8 @@ def evo_re_proc_meminfo_te_registration(rtr, node, **kwargs):
             "database": True
         }
 
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(f"INFO: [{rtr}] [{node}] Registered cat /proc/meminfo - {parameter}", display_log=True)
 
@@ -1106,8 +1118,8 @@ def longevity_te_reg_sys_mem_stats_jemalloc_stats_on_rtr(rtr, node, **kwargs):
             "xpath": f'//system-memory-statistics-jemalloc/system-memory-statistics-jemalloc-summary[app-name="{app}"]/jemalloc-stat-total_allocated'
         })
 
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
 
         testbed.log(f"INFO: Registered jemalloc stats for {app} on {rtr} {node}", display_log=True)
 
@@ -1135,6 +1147,7 @@ def evo_top_re_te_registration(rtr, node, evo_process_dict, tolerance, **kwargs)
 
     # Set the Controller to the state
     device_utils.set_current_controller(rh, controller=node)
+
 
     # Get RE Slot State
     slot_state = evo_get_re_slot_ha_state(rtr, node)
@@ -1400,6 +1413,7 @@ def evo_re_ps_mem_te_registration(rtr, node, evo_process_dict, ps_mem_def_tol, *
     rh = testbed.get_handle(resource=rtr)
 
     # Connect to current controller
+   
     device_utils.set_current_controller(rh, controller=node)
 
     # Get RE Slot State
@@ -1503,7 +1517,8 @@ def evo_re_ps_mem_te_registration(rtr, node, evo_process_dict, ps_mem_def_tol, *
             testbed.log(level="INFO", message=f"\n[INFO] [{rtr}] [{node}] Registered with ps_mem RAM Used for {process}", console=True)
 
     # Move the Controller Back to Master
-    device_utils.set_current_controller(rh, controller="master")
+    device_utils.set_current_controller(rh, controller=node)
+    #device_utils.set_current_controller(rh, controller="master")
 
 
 def evo_re_top_command_te_registration(rtr, node, **kwargs):
@@ -1530,6 +1545,7 @@ def evo_re_top_command_te_registration(rtr, node, **kwargs):
 
     # Connect to the Node Controller
     device_utils.set_current_controller(rh, controller=node)
+    #device_utils.set_current_controller(rh, controller=node)
 
     # Get the node state
     node_state = evo_get_re_slot_ha_state(rtr, node)
@@ -2092,6 +2108,7 @@ def evo_memory_te_registrations(evo_router_list, process_dict=None, **kwargs):
         node_list = evo_get_node_list(rtr, **kwargs)
         
         # Register telemetry per node
+        print(f"here...{rtr}->{node_list}")
         evo_node_wise_te_registrations(rtr, evo_process_dict, node_list, **kwargs)
 
 
@@ -2481,7 +2498,7 @@ def longevity_te_register_fpc_heap_blocks_on_fpc(rtr, fpc, block_names, **kwargs
     # ------------------------------------------------------
     # Check whether the model is aft or nonaft
     # ------------------------------------------------------       
-    is_aft_card = longevity_chk_is_fpc_aft(fpc_desc)
+    is_aft_card = longevity_chk_is_fpc_aft(fpc_desc, **kwargs)
     if is_aft_card:
         te_dict["command"] = f"cprod -A fpc{fpc}.0 -c \"show heap\""
     else:
@@ -2509,8 +2526,8 @@ def longevity_te_register_fpc_heap_blocks_on_fpc(rtr, fpc, block_names, **kwargs
             "regexp": rf"\d+\s+\w+\s+\d+\s+\d+\s+(\d+)\s+\d+\s+{block}"
         })
         
-        lrm_baseline.register(**te_dict)
-        te_longevity_test.register(**te_dict)
+        #lrm_baseline.register(**te_dict)
+        #te_longevity_test.register(**te_dict)
         testbed.log(level="INFO", message=f"[ {rtr} ] [ {tv.get(f'{rtr}__name', '')} ] [ fpc{fpc} ] Registered {block} memory used")
 
 
@@ -2546,6 +2563,7 @@ def longevity_te_register_fpc_heap_blocks_on_rtr_list(rtr_list, **kwargs):
     Return: None
     """
 
+    self = kwargs.get('self', None)
     # -------------------------------------------------------
     # Skip if the list is empty
     # -------------------------------------------------------
@@ -2557,12 +2575,12 @@ def longevity_te_register_fpc_heap_blocks_on_rtr_list(rtr_list, **kwargs):
     # Perform Per-router registration
     # -------------------------------------------------------
     for rtr in rtr_list:
-        longevity_te_register_fpc_heap_blocks_on_rtr(rtr)
+        longevity_te_register_fpc_heap_blocks_on_rtr(rtr, **kwargs)
 
 
 
 
-def longevity_te_register_fpc_heap_blocks_on_rtr(rtr):
+def longevity_te_register_fpc_heap_blocks_on_rtr(rtr, **kwargs):
     """
     Registers FPC heap blocks for the given router.
 
@@ -2571,7 +2589,7 @@ def longevity_te_register_fpc_heap_blocks_on_rtr(rtr):
 
     Return: None
     """
-
+    self = kwargs.get('self', None)
     # ------------------------------------------------------
     # Get Router Handle
     # ------------------------------------------------------
@@ -2580,35 +2598,35 @@ def longevity_te_register_fpc_heap_blocks_on_rtr(rtr):
     # ------------------------------------------------------
     # Get List of online FPCs
     # ------------------------------------------------------
-    cmd_timeout = Get_Variable_Value(tv.get('uv-cmd-timeout-fpc-online-slot-list'), 600)
-    xml_out = execute_cli_command_on_device(
+    cmd_timeout = tv.get('uv-cmd-timeout-fpc-online-slot-list', 600)
+    xml_out = device_utils.execute_cli_command_on_device(
         device=rh,
         command="show chassis fpc | display xml",
         timeout=cmd_timeout,
         pattern=r"Toby.*>$"
     )
 
-    fpc_list = get_elements_texts(xml_out, "fpc-information/fpc[state='Online']/slot")
-    fpc_list_len = len(fpc_list)
+    self.fpc_list = get_elements_texts(xml_out, "fpc-information/fpc[state='Online']/slot")
+    self.fpc_list_len = len(self.fpc_list)
 
     # Store variables globally
-    testbed.suite_variables["fpc_list"] = fpc_list
-    testbed.suite_variables["fpc_list_len"] = fpc_list_len
+    #testbed.suite_variables["fpc_list"] = fpc_list
+    #testbed.suite_variables["fpc_list_len"] = fpc_list_len
 
-    if fpc_list_len == 0:
+    if self.fpc_list_len == 0:
         testbed.log(f"[ {rtr} ] [ {tv.get(f'{rtr}__name')} ] No FPCs are online\n")
         return
 
-    testbed.log(f"[ {rtr} ] [ {tv.get(f'{rtr}__name')} ] Online FPC List = {fpc_list}\n")
+    testbed.log(f"[ {rtr} ] [ {tv.get(f'{rtr}__name')} ] Online FPC List = {self.fpc_list}\n")
 
     # ------------------------------------------------------
     # Perform Per FPC Registration
     # ------------------------------------------------------    
-    for fpc in fpc_list:
+    for fpc in self.fpc_list:
         # -------------------------------------------------
         # Get the Heap block names
         # -------------------------------------------------    
-        result, block_names = longevity_get_junos_fpc_heap_block_names(rtr, fpc)
+        result, block_names = longevity_get_junos_fpc_heap_block_names(rtr, fpc, **kwargs)
 
         # -------------------------------------------------
         # Skip FPC if the results are false
@@ -2621,7 +2639,7 @@ def longevity_te_register_fpc_heap_blocks_on_rtr(rtr):
         # -------------------------------------------------
         # Perform Registration For each block
         # -------------------------------------------------    
-        longevity_te_register_fpc_heap_blocks_on_fpc(rtr, fpc, block_names)
+        longevity_te_register_fpc_heap_blocks_on_fpc(rtr, fpc, block_names, **kwargs)
 
 
 
@@ -2706,6 +2724,7 @@ def JunOS_Top_RPD_Dual_RE_TE_Registration(rtr='', node='', junos_process_dict=No
     else:
         testbed.log(f"RPD is not running on node {node} for {rtr}. Skipping TE registration for TOP RPD command", display_log=True)
 
+
     device_utils.set_current_controller(rh, controller='master')
 
 
@@ -2782,19 +2801,19 @@ def JunOS_Show_System_Process_Extensive_TE_Registrations(rtr='', junos_process_d
             kwargs.update({'command': f"show system processes extensive | grep {process}"})
             kwargs.update({'regexp': f"\\d+\\s+\\w+\\s+\\-*\\w+\\s+\\w+\\s+(\\w+\\.*\\w*)\\s+\\w+\\.*\\w*.*\\s+{process}"})
             # Register process-specific telemetry for CPU and memory usage
-            lrm_baseline.register(**kwargs)  
-            te_longevity_test.register(**kwargs)
+            #lrm_baseline.register(**kwargs)  
+            #te_longevity_test.register(**kwargs)
 
             kwargs.update({'parameter': f"show-system-processes-extensive-{process}-res"})
             kwargs.update({'regexp': f"\\d+\\s+\\w+\\s+\\-*\\w+\\s+\\w+\\s+\\w+\\.*\\w*\\s+(\\w+\\.*\\w*).*\\s+{process}"})
-            lrm_baseline.register(**kwargs)  
-            te_longevity_test.register(**kwargs)
+            #lrm_baseline.register(**kwargs)  
+            #te_longevity_test.register(**kwargs)
 
             
  
 
 
-def junos_memory_te_registrations(junos_router_list, process_dict=None):
+def junos_memory_te_registrations(junos_router_list, process_dict=None, **kwargs):
     """
     Registers memory usage for JunOS processes.
 
@@ -2804,6 +2823,7 @@ def junos_memory_te_registrations(junos_router_list, process_dict=None):
 
     Return: None
     """
+    self = kwargs.get('self', None)
     
     for rtr in junos_router_list:
         # Get Router Handle
@@ -2821,31 +2841,39 @@ def junos_memory_te_registrations(junos_router_list, process_dict=None):
         
         # Check if process list is defined in system parameters
         is_process_dict_in_params = "uv-processes" in t["resources"][rtr]["system"]["primary"]
-        
+        #is_process_dict_in_params=
         # Check if process list is defined under fv-properties
-        is_process_dict_in_fv_prop = "processes" in t["resources"][rtr]["system"]["primary"]["fv-properties"]
-        tmp_var = (
-            t["resources"][rtr]["system"]["primary"]["fv-properties"]["processes"]
-            if is_process_dict_in_fv_prop else None
-        )
+        #is_process_dict_in_fv_prop = "processes" in t["resources"][rtr]["system"]["primary"]["fv-properties"]
+        #tmp_var = (
+        #    t["resources"][rtr]["system"]["primary"]["fv-properties"]["processes"]
+        #    if is_process_dict_in_fv_prop else None
+        #)
         
         # Check if user has provided process dictionary
-        is_process_dict_in_robot = process_dict is not None
+        #is_process_dict_in_robot = process_dict is not None
         
-        junos_process_dict = (
-            process_dict.copy() if is_process_dict_in_robot else
-            t["resources"][rtr]["system"]["primary"].get("uv-processes") if is_process_dict_in_params else
-            tv.get(tmp_var) if is_process_dict_in_fv_prop else
-            default_process_list
-        )
-        
+        #junos_process_dict = (
+        #    process_dict.copy() if is_process_dict_in_robot else
+        #    t["resources"][rtr]["system"]["primary"].get("uv-processes") if is_process_dict_in_params else
+        #    tv.get(tmp_var) if is_process_dict_in_fv_prop else
+        #    default_process_list
+        #)
+        junos_process_dict_str = t["resources"][rtr]["system"]["primary"].get("uv-processes") 
+        import re
+        str_m = re.compile(r"'(\w+)':\s*'(\d+)'")
+        junos_process_dict={}
+        for line in junos_process_dict_str.split('\n'):
+            match = str_m.search(line)
+            if match:
+                (app,threshold) = match.group(1), int(match.group(2))
+                junos_process_dict[app]=int(threshold)
         junos_process_list = list(junos_process_dict.keys())
         testbed.log(level="INFO", message=f"\n[INFO] [{rtr}] List Of Processes Used in Data Registration = {junos_process_list}", console=True)
         
         # Register processes
-        junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict)
+        junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict, **kwargs)
 
-def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict):
+def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict, **kwargs):
     """
     Registers show system processes extensive for JunOS.
 
@@ -2855,6 +2883,8 @@ def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict
 
     Return: None
     """
+    
+    self = kwargs.get('self', None)
     
     sys_prc_tol = tv.get('uv-junos-show-system-processes-extensiv-tolerance', 20)
     kwargs = {
@@ -2876,7 +2906,7 @@ def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict
         is_match = re.match(search_string, process)
         
         if is_match:
-            junos_top_rpd_te_registration(rtr=rtr, junos_process_dict=junos_process_dict)
+            junos_top_rpd_te_registration(rtr=rtr, junos_process_dict=junos_process_dict, **kwargs)
             continue
         
         # ---------------------------------------------------------
@@ -2889,8 +2919,8 @@ def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict
             "regexp": rf"\\d+\\s+\\w+\\s+\\-*\\w+\\s+\\w+\\s+(\\w+\\.*\\w*)\\s+\\w+\\.*\\w*.*\\s+{process}"
         })
         
-        lrm_baseline.register(**kwargs)
-        te_longevity_test.register(**kwargs)
+        #lrm_baseline.register(**kwargs)
+        #te_longevity_test.register(**kwargs)
         
         # ---------------------------------------------------------
         # Register for Process RES Memory 
@@ -2900,12 +2930,12 @@ def junos_show_system_process_extensive_te_registrations(rtr, junos_process_dict
             "regexp": rf"\\d+\\s+\\w+\\s+\\-*\\w+\\s+\\w+\\s+\\w+\\.*\\w*\\s+(\\w+\\.*\\w*).*\\s+{process}"
         })
         
-        lrm_baseline.register(**kwargs)
-        te_longevity_test.register(**kwargs)
+        #lrm_baseline.register(**kwargs)
+        #te_longevity_test.register(**kwargs)
         
         testbed.log(level="INFO", message=f"[INFO] [{rtr}] Registered show system processes extensive for {process}", console=True)
 
-def junos_top_rpd_te_registration(rtr, junos_process_dict):
+def junos_top_rpd_te_registration(rtr, junos_process_dict, **kwargs):
     """
     Registers top -n | grep "rpd" for JunOS.
     
@@ -2915,7 +2945,7 @@ def junos_top_rpd_te_registration(rtr, junos_process_dict):
     
     Return: None
     """
-    
+    self = kwargs.get('self', None)
     is_dual_re = junos_is_chassis_dual_re(rtr)
     
     if is_dual_re:
@@ -2941,16 +2971,16 @@ def junos_top_rpd_te_registration(rtr, junos_process_dict):
         "mode": "shell"
     }
     
-    te_longevity_test.register(**kwargs)
-    lrm_baseline.register(**kwargs)
+    #te_longevity_test.register(**kwargs)
+    #lrm_baseline.register(**kwargs)
     
     kwargs.update({
         "parameter": "top-rpd-cpu-res",
         "regexp": r"\\d+\\s+\\w+\\s+\\w+\\s+\\w+\\s+\\w+\\s+\\w+\\.*\\w*\\s+(\\w+\\.*\\w*).*\\s+rpd$"
     })
     
-    te_longevity_test.register(**kwargs)
-    lrm_baseline.register(**kwargs)
+    #te_longevity_test.register(**kwargs)
+    #lrm_baseline.register(**kwargs)
 
 
 def junos_is_chassis_dual_re(rtr):
@@ -3012,18 +3042,19 @@ def junos_top_rpd_dual_re_te_registration(rtr, node, junos_process_dict):
     is_process_running = check_processing_is_running_in_shell(rtr, command="top -n | grep 'rpd'", process="rpd")
     if is_process_running:
         testbed.log(level="INFO", message=f"[INFO] Started Registering the Command top -n | grep 'rpd' for {rtr} node:{node}", console=True)
-        te_longevity_test.register(**kwargs)
-        lrm_baseline.register(**kwargs)
+        #te_longevity_test.register(**kwargs)
+        #lrm_baseline.register(**kwargs)
         kwargs.update({
             "parameter": "top-rpd-cpu-res",
             "regexp": r"\\d+\\s+\\w+\\s+\\w+\\s+\\w+\\s+\\w+\\s+\\w+\\.*\\w*\\s+(\\w+\\.*\\w*).*\\s+rpd$"
         })
-        te_longevity_test.register(**kwargs)
-        lrm_baseline.register(**kwargs)
+        #te_longevity_test.register(**kwargs)
+        #lrm_baseline.register(**kwargs)
         testbed.log(level="INFO", message=f"[INFO] Completed Registering the Command top -n | grep 'rpd' for {rtr} node:{node}", console=True)
     else:
         testbed.log(level="INFO", message=f"[INFO] RPD is not running on node {node} for {rtr}. Skipping TE registration for TOP RPD command", console=True)
     
+ 
     device_utils.set_current_controller(rh, controller="master")
 
 
@@ -3071,7 +3102,7 @@ def check_processing_is_running_in_shell(rtr, command="top -n | grep 'rpd'", pro
     return bool(re.search(rf"{process}$", shell_out))
 
 
-def junos_longevity_data_registration(rtr_list, process_dict=None, rtag=None):
+def junos_longevity_data_registration(rtr_list, process_dict=None, rtag=None, **kwargs):
     """
     Keyword that registers all the TE JunOS related checks.
 
@@ -3104,6 +3135,7 @@ def junos_longevity_data_registration(rtr_list, process_dict=None, rtag=None):
     testbed.log("\n[INFO] Starting JunOS Data Registration Process", console=True)
 
     # Register required tasks
+    #
     longevity_te_reg_task_memory_detail(rtr_list, **kwargs)
     longevity_te_register_fpc_heap_blocks_on_rtr_list(rtr_list, **kwargs)
     junos_memory_te_registrations(rtr_list, process_dict, **kwargs)
@@ -3129,7 +3161,7 @@ def longevity_start_te_registrations(**kwargs):
     
     
     if self.junos_lng_global_flag:
-        junos_longevity_data_registration(rtr_list=self.junos_lng_rtr_list, **{'self': self})
+        junos_longevity_data_registration(rtr_list=self.junos_lng_rtr_list, **kwargs)
     
 
   
@@ -3283,7 +3315,7 @@ def pdt_start_memory_profiling(mode, rtr_list=None, **kwargs):
             app_list = tv.get(f"{rtr}__uv-evo-mem-profile-app-list").split(',')
             
             hostname = tv.get(f"{rtr}__re0__hostname")
-            #pdb.set_trace()
+            #
             if failed_apps_not_enabled_memory_profiling:
                 if hostname in failed_apps_not_enabled_memory_profiling:
                     app_list.extend(failed_apps_not_enabled_memory_profiling[hostname])
@@ -3320,9 +3352,11 @@ def get_proc_collector_to_evo_re(rtr, node, **kwargs):
     
     if not cmd_resp:
         testbed.log(f"'level' = WARN: Failed to upload proc_collector.py to {rtr}", display_log=True)
+
+      
         device_utils.set_current_controller(device=rh, controller='master')
         return  # Exit the function if upload failed
-    
+
     device_utils.set_current_controller(device=rh, controller='master')
 
 
@@ -3341,6 +3375,7 @@ def get_proc_collector_to_evo_fpc(rtr, node, **kwargs):
     
     if not cmd_resp:
         testbed.log(f"'level' = WARN: Failed to upload proc_collector.py to {rtr} (FPC node)", display_log=True)
+       
         device_utils.set_current_controller(device=rh, controller='master')
         return  # Exit the function if upload failed
     
@@ -3499,6 +3534,7 @@ def pdt_get_file_from_re(rtr, node, src_file, dst_location, **kwargs):
     self = kwargs.get('self', None)
     rh = testbed.get_handle(resource=rtr)
     _h_name = device_utils.get_host_name_for_device(rh)
+  
     device_utils.set_current_controller(rh, controller=node)
 
     # Check if the source file exists
@@ -3664,6 +3700,7 @@ def pdt_move_file(rtr, node, src_file, dst_path, **kwargs):
     rh = testbed.get_handle(resource=rtr)
     if 're' in node:
         # For RE node
+      
         device_utils.set_current_controller(rh, controller=node)
         device_utils.switch_to_superuser(rh)
         device_utils.execute_shell_command_on_device(device=rh, timeout=self.cmd_timeout,
@@ -3683,7 +3720,7 @@ def pdt_dump_rpd_memory_profile(rtr, app, node_list, itr_tag, **kwargs):
     """
     self = kwargs.get('self', None)
     rh = testbed.get_handle(resource=rtr)
-    #pdb.set_trace()
+    #
     for node in node_list:
         # Get the PID of the application
         pid_xml_resp = device_utils.execute_cli_command_on_device(device=rh, command=f"show system applications app {app} detail node {node} | display xml", 
@@ -3727,7 +3764,7 @@ def pdt_dump_rpd_memory_profile(rtr, app, node_list, itr_tag, **kwargs):
         # Update the dictionary with the dump file location
         matches = [match.group(1) for match in re.finditer(r'test_config_itr_(\d+)', itr_tag)] or []
         key = itr_tag if not matches else matches[0]
-        #pdb.set_trace()
+        #
         # Construct the attribute name
         attr_name = f"dict_{rtr}_{node}_{app}"
 
@@ -3739,7 +3776,7 @@ def pdt_dump_rpd_memory_profile(rtr, app, node_list, itr_tag, **kwargs):
 
         # Update the dictionary
         
-        #pdb.set_trace()
+        #
         if rpd_heap_file:  # Ensure dump_file_location is valid
             existing_dict.update({key: rpd_heap_file})
 
@@ -3762,9 +3799,9 @@ def pdt_dump_memory_profile_on_rtr(rtr, app_list, itr_tag, **kwargs):
         if app != 'routing':
             pdt_dump_memory_profile_on_rtr_for_node_list(rtr, app, node_list, itr_tag, **{'self': self})
         else:
-            #pdb.set_trace()
+            #
             pdt_dump_rpd_memory_profile(rtr, app, node_list, itr_tag, **{'self': self})
-            #pdb.set_trace()
+            #
 
 
 def pdt_dump_memory_profile(itr_tag, rtr_list, **kwargs):
@@ -3780,7 +3817,7 @@ def pdt_dump_memory_profile(itr_tag, rtr_list, **kwargs):
             testbed.log(f"'level' = WARN: No memory profile app list found for {rtr}", display_log=True)
             continue
            
-            #pdb.set_trace()
+            #
           
         app_list = tv.get(f"{rtr}__uv-evo-mem-profile-app-list").split(',')
         if failed_apps_not_enabled_memory_profiling:
@@ -4110,7 +4147,7 @@ def Type_Four(cmd, annotation, duration, count, args_1, hostname, **kwargs):
     dh = self.longevity_dut_handles[hostname]
     try:
         event_engine.run_event('Flap Interface', device=dh, interface=args_1, method=cmd)
-        #pdb.set_trace()
+        #
     except Exception:
         pass
     
@@ -4627,44 +4664,45 @@ def generate_longevity_dashboard(check_point=None, **kwargs):
         _nodes_data[host_name] = node_list
     
    
-    if lng_common.longevity_report_data:
-            for _host_name in _host_info.keys():
-                if _host_name in self.brcm_host_names:
-                    lng_common.longevity_report_data[f"brcm_inspect_on_re0-{_host_name}.html"]={'lrm_config_post_test':True, 'test_config_post_test':False}
-            
-            scenario_execution_secs = self.duration_in_sec
-            host_info = _host_info
-            nodes_data = _nodes_data
-            scenario = f"{self.test_type}{self.test_scenario}"
-            #log_dir = "/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250331-200749/test_suite_iter_0/ActiveTest_Scenario1"
-            log_dir = self.LONGEVITY_OUTPUT_DIR
-            #pdb.set_trace()
-            orchestrator = LongevityReportOrchestrator(
-                nodes_data=nodes_data,
-                global_data_dict=lng_common.longevity_report_data,
-                scenario=scenario,
-                scenario_execution_secs=scenario_execution_secs,
-                host_info=host_info,
-                log_dir=log_dir
-            )
-            import traceback
-            try:
-                #pdb.set_trace()
-                orchestrator.run()
+    if _nodes_data:
+        if lng_common.longevity_report_data:
+                for _host_name in _host_info.keys():
+                    if _host_name in self.brcm_host_names:
+                        lng_common.longevity_report_data[f"brcm_inspect_on_re0-{_host_name}.html"]={'lrm_config_post_test':True, 'test_config_post_test':False}
                 
-                #failed_apps_not_enabled_memory_profiling =[]
-                global failed_apps_not_enabled_memory_profiling
-                #problem is here...
-                if _host_name in orchestrator.failed_memory_apps_dict:
-                    for k, v in orchestrator.failed_memory_apps_dict[_host_name].items():
-                        if v:
-                            if _host_name not in failed_apps_not_enabled_memory_profiling:
-                                failed_apps_not_enabled_memory_profiling[_host_name] = []
-                            failed_apps_not_enabled_memory_profiling[_host_name].extend(v)
+                scenario_execution_secs = self.duration_in_sec
+                host_info = _host_info
+                nodes_data = _nodes_data
+                scenario = f"{self.test_type}{self.test_scenario}"
+                #log_dir = "/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250331-200749/test_suite_iter_0/ActiveTest_Scenario1"
+                log_dir = self.LONGEVITY_OUTPUT_DIR
+                #
+                orchestrator = LongevityReportOrchestrator(
+                    nodes_data=nodes_data,
+                    global_data_dict=lng_common.longevity_report_data,
+                    scenario=scenario,
+                    scenario_execution_secs=scenario_execution_secs,
+                    host_info=host_info,
+                    log_dir=log_dir
+                )
+                import traceback
+                try:
+                    #
+                    orchestrator.run()
                     
-                    
-            except Exception as e:
-                traceback.print_exc()
+                    #failed_apps_not_enabled_memory_profiling =[]
+                    global failed_apps_not_enabled_memory_profiling
+                    #problem is here...
+                    if _host_name in orchestrator.failed_memory_apps_dict:
+                        for k, v in orchestrator.failed_memory_apps_dict[_host_name].items():
+                            if v:
+                                if _host_name not in failed_apps_not_enabled_memory_profiling:
+                                    failed_apps_not_enabled_memory_profiling[_host_name] = []
+                                failed_apps_not_enabled_memory_profiling[_host_name].extend(v)
+                        
+                        
+                except Exception as e:
+                    traceback.print_exc()
             
     
     
@@ -4704,7 +4742,8 @@ def generate_longevity_junos_dashboard_helper(Log_Dir, host_name, junos_nodes, o
     lng_common.plot_graph_in_dashboard(out_dir=out_dir, host_name=host_name, platform=platform, version=version, url=None)
 
 
-def generate_longevity_junos_dashboard(check_point=None):
+def generate_longevity_junos_dashboard(check_point=None, **kwargs):
+    
     """ 
     Keyword that generates the Longevity Junos Dashboard.
     
@@ -4717,7 +4756,7 @@ def generate_longevity_junos_dashboard(check_point=None):
     Returns:
     - None
     """
-
+    self = kwargs.get('self', None)
     LLOG(message="!!!!!!!! Longevity Dashboard Creation !!!!!!!!")
 
     # Determine the dashboard directory based on check_point
@@ -4726,13 +4765,13 @@ def generate_longevity_junos_dashboard(check_point=None):
     else:
         dashboard_dir = check_point
 
-    for lrtr in junos_lng_rtr_list:
+    for lrtr in self.junos_lng_rtr_list:
         host_name = t['resources'][lrtr]['system']['primary']['name']
         platform = tv[f"{lrtr}__model"]
         version = tv[f"{lrtr}__os-ver"]
 
         # Create dashboard directory
-        out_dir = os.path.join(LONGEVITY_OUTPUT_DIR, "dashboard", host_name, dashboard_dir)
+        out_dir = os.path.join(self.LONGEVITY_OUTPUT_DIR, "dashboard", host_name, dashboard_dir)
         os.makedirs(out_dir, exist_ok=True)
 
         # Get Junos node list
@@ -4759,8 +4798,12 @@ def randomize_halt_testing(steady_state_keyword, event_keyword, **kwargs):
     
     j = 0
     for_every_itr_dash = tv.get('uv-for-every-test-itr-dashboard-generation', 2)
+   
+    
     time_to_wait_post_iteration = tv.get('uv-longevity-test-itr-interval', 1800)
-    min_duration_in_sec = int(0.9 * time_to_wait_post_iteration)
+    min_duration_in_sec = int(0.9 * int(time_to_wait_post_iteration))
+    #
+    test_start_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for number in range(0, 999999):
         
         # Ensure nodes list is correctly processed
@@ -4772,12 +4815,16 @@ def randomize_halt_testing(steady_state_keyword, event_keyword, **kwargs):
         
         # Get current time difference
         current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        diff_time_in_sec = get_time_diff_in_seconds(curr_time=current_date, start_time=self.halt_start_time)
+        diff_time_in_sec = get_time_diff_in_seconds(curr_time=current_date, start_time=test_start_time)
+        time_left_in_sec = self.duration_in_sec-diff_time_in_sec
        
         # Break if duration exceeded
         #if diff_time_in_sec >= self.duration_in_sec or diff_time_in_sec < min_duration_in_sec:
-        if diff_time_in_sec < min_duration_in_sec:
+        if min_duration_in_sec > time_left_in_sec:
+            LLOG(message=f"Longevity Test Duration of {self.duration_in_sec} is completed. Exiting the Test Iterations.\n", **{'self': self})
             break
+        else:
+            LLOG(message=f"Longevity Test Duration of {self.duration_in_sec} is not completed. Continuing to the next iteration.\n", **{'self': self})
         
         # Perform halt testing and other actions
         global_iteration = str(int(number) + 1)
@@ -4805,7 +4852,7 @@ def randomize_halt_testing(steady_state_keyword, event_keyword, **kwargs):
         #asample_size = len(self.eval(f"{'processed_list_' + dut}"))
         random_list = random.sample(range(1, asample_size + 1), asample_size)
         
-        #pdb.set_trace()
+        #
         
         LLOG(message=f"** BEGIN HALT ITERATION: {self.global_iteration} - RANDOM LIST {random_list} **\n", **{'self': self})
     
@@ -4831,22 +4878,18 @@ def randomize_halt_testing(steady_state_keyword, event_keyword, **kwargs):
         LLOG(message=f"** Waiting for {time_to_wait_post_iteration} seconds after the events execution is completed **\n", **{'self': self})
 
         #check_for_link_down_events(dut, f'test_config_itr_{number}', **kwargs)
-        try:
+        #try:
             
-            longevity_te_test_config_converge()
+        #    longevity_te_test_config_converge()
             
-        except Exception as e:
-            LLOG(message=f"Error during TE Test Config Convergence: {str(e)}", **{'self': self})
+        #except Exception as e:
+        #    LLOG(message=f"Error during TE Test Config Convergence: {str(e)}", **{'self': self})
 
-        if steady_state_keyword:
-            try:
-                steady_state_keyword()
-            except Exception as e:
-                LLOG(message=f"Error executing Steady State Keyword: {str(e)}", **{'self': self})
-
-        
-
-  
+        #if steady_state_keyword:
+        #    try:
+        #        steady_state_keyword()
+        #    except Exception as e:
+        #        LLOG(message=f"Error executing Steady State Keyword: {str(e)}", **{'self': self})
 
         # Data Collection at Convergence
         is_evo_dump_enabled = tv.get('uv-evo-system-dump-at-convergence', 0)
@@ -4866,17 +4909,17 @@ def randomize_halt_testing(steady_state_keyword, event_keyword, **kwargs):
                 LLOG(message=f"Error during JunOS Data Collection: {str(e)}", **{'self': self})
         '''
         collect_longevity_test_data(self, longevity_check_point=f'test_config_itr_{number}')
-
-        
         # Generate dashboards at intermediate test iterations
-        valid = (number + 1) % for_every_itr_dash
-        if valid == 0:
+        if (number + 1) % 5 == 0:
             try:
-                generate_longevity_dashboard(check_point=f"test_config_itr_{number}")
-                generate_longevity_junos_dashboard(check_point=f"test_config_itr_{number}")
+                LLOG(message=f"Started Creation dashboard for itr->{number}", **{'self': self})
+                generate_longevity_dashboard(check_point=f"test_config_itr_{number}", **kwargs)
+                generate_longevity_junos_dashboard(check_point=f"test_config_itr_{number}", **kwargs)
             except Exception as e:
                 LLOG(message=f"Error during Dashboard Generation: {str(e)}", **{'self': self})
 
+        number+=1
+       
 
 
 def randomize_halt_testing_bk(steady_state_keyword, event_keyword, **kwargs):
@@ -4907,7 +4950,7 @@ def randomize_halt_testing_bk(steady_state_keyword, event_keyword, **kwargs):
 
     # Get iteration dashboard generation frequency
     for_every_itr_dash = tv.get('uv-for-every-test-itr-dashboard-generation', 2)
-
+    
     for number in range(999999):
         # Validate events list
         events_nodes_list = list(set(events_nodes_list))
@@ -4961,19 +5004,19 @@ def randomize_halt_testing_bk(steady_state_keyword, event_keyword, **kwargs):
         print(f"** Waiting for {time_to_wait_post_iteration} seconds after the events execution is completed **\n")
 
         # Perform TE Convergence
-        try:
+        #try:
             
-            longevity_te_test_config_converge()
+        #    longevity_te_test_config_converge()
             
-        except Exception as e:
-            print(f"Error during TE Test Config Convergence: {str(e)}")
+        #except Exception as e:
+        #    print(f"Error during TE Test Config Convergence: {str(e)}")
 
         # Call Steady State Keyword if provided
-        if steady_state_keyword:
-            try:
-                steady_state_keyword()
-            except Exception as e:
-                print(f"Error executing Steady State Keyword: {str(e)}")
+        #if steady_state_keyword:
+        #    try:
+        #        steady_state_keyword()
+        #    except Exception as e:
+        #        print(f"Error executing Steady State Keyword: {str(e)}")
 
         # Data Collection and Longevity Processing
         is_evo_dump_at_itr_enabled = tv.get('uv-evo-system-dump-at-convergence', 0)
@@ -5034,14 +5077,14 @@ def passive_execution(steady_state_keyword, **kwargs):
     # Iterative execution for longevity test
     time_to_wait_post_iteration = tv.get('uv-longevity-test-itr-interval', 1800)
     min_duration_in_sec = int(0.9 * int(time_to_wait_post_iteration))
-    #pdb.set_trace()
+    #
     number = 0
     while True:
         current_date = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         diff_time_in_sec = get_time_diff_in_seconds(curr_time=current_date, start_time=test_start_time)
         time_left_in_sec = self.duration_in_sec-diff_time_in_sec
         #if diff_time_in_sec >= self.duration_in_sec:
-        #pdb.set_trace()
+        #
         if min_duration_in_sec > time_left_in_sec:
         #if diff_time_in_sec < min_duration_in_sec:
             LLOG(message=f"Longevity Test Duration of {self.duration_in_sec} is completed. Exiting the Test Iterations.\n", **{'self': self})
@@ -5061,18 +5104,18 @@ def passive_execution(steady_state_keyword, **kwargs):
 
         # Converge test configuration
      
-        try:
+        #try:
             
-            longevity_te_test_config_converge()
+        #    longevity_te_test_config_converge()
             
-        except Exception as e:
-            LLOG(message=f"Error during TE Test Config Convergence: {str(e)}", **{'self': self})
+        #except Exception as e:
+        #    LLOG(message=f"Error during TE Test Config Convergence: {str(e)}", **{'self': self})
 
-        if steady_state_keyword:
-            try:
-                steady_state_keyword()
-            except Exception as e:
-                LLOG(message=f"Error executing Steady State Keyword: {str(e)}", **{'self': self})
+        #if steady_state_keyword:
+        #    try:
+        #        steady_state_keyword()
+        #    except Exception as e:
+        #        LLOG(message=f"Error executing Steady State Keyword: {str(e)}", **{'self': self})
 
         
         # Data Collection at Convergence
@@ -5095,8 +5138,8 @@ def passive_execution(steady_state_keyword, **kwargs):
 
         # Generate dashboards for specific iterations
         if (number + 1) % 5 == 0:
-            generate_longevity_dashboard(f"check_point=test_config_itr_{number}", **{'self': self})
-            #generate_longevity_junos_dashboard(f"check_point=test_config_itr_{number}", **{'self': self})
+            generate_longevity_dashboard(check_point=f"test_config_itr_{number}", **{'self': self})
+            generate_longevity_junos_dashboard(check_point=f"test_config_itr_{number}", **{'self': self})
         number+=1
 
 def longevity_post_test_preparation(rtr_list, **kwargs):
@@ -5127,12 +5170,12 @@ def longevity_post_test_preparation(rtr_list, **kwargs):
 
     # Load LRM configuration if necessary
     if self.is_load_lrm_config:
-        #hipdb.set_trace()
+        #hi
         LLOG(message=f"Loading LRM Configuration On {rtr_list}\n", **{'self': self})
         longevity_load_lrm_baseline_config(rtr_list, **{'self': self})
         wait_timer_01 = tv.get('uv-longevity-post-lrm-baseline-wait-time', 1800)
         LSLEEP(wait_timer_01, **{'self': self})
-        #pdb.set_trace()
+        #
 
     # Check if post-configuration keywords exist and execute them
     #lrm_post_kw = run_kw_after_lrm_load_config if 'run_kw_after_lrm_load_config' in locals() else []
@@ -5285,6 +5328,7 @@ def execute_proc_collector_on_node_re(rtr, node, app, **kwargs):
     proc_collector_exec_command = get_proc_collector_exec_command(rtr, node, app, self=self)
 
     # Switch to appropriate controller and superuser mode
+
     device_utils.set_current_controller(rh, controller=node)
     device_utils.switch_to_superuser(device=rh)
 
@@ -5661,7 +5705,7 @@ def remove_proc_collector_profile_files_on_node_re(rtr, node, cleanup_list, **kw
     device_utils.switch_to_superuser(device=rh)
     
     remove_profile_files(rh, cleanup_list, r'\/var\/tmp\/([a-zA-Z-_0-9]+)\..*\.tgz', '/var/log', node, **kwargs)
-    
+  
     device_utils.set_current_controller(rh, controller='master')
 
 def remove_proc_collector_profile_files_on_node_fpc(rtr, node, cleanup_list, **kwargs):
@@ -5935,8 +5979,8 @@ def longevity_test_execution(
         data_preprocessing(**{"self": self})
 
     # Stop TE objects if applicable
-    if self.te_user_flag and self.test_scenario == 'Test_Scenario1':
-        process_user_te_objects(self.te_data_objects_list, 'stop', **{"self": self})
+    #if self.te_user_flag and self.test_scenario == 'Test_Scenario1':
+    #    process_user_te_objects(self.te_data_objects_list, 'stop', **{"self": self})
 
     # Test preparation steps
     if self.test_scenario == 'Test_Scenario1':
@@ -5990,19 +6034,19 @@ def longevity_test_execution(
     
 
     if is_load_lrm_config:
-        longevity_te_lrm_baseline_snapshot()
+        #longevity_te_lrm_baseline_snapshot()
         longevity_load_rtr_test_config(**{"self": self})
         settle_down_time = tv['uv-longevity-post-lrm-baseline-wait-time']
         LLOG(level="INFO", message=f"Sleeping for {settle_down_time} seconds after loading test config...", **{"self": self})
         time.sleep(settle_down_time)
-        longevity_te_test_config_start()
+        #longevity_te_test_config_start()
 
     # Handle steady state keyword execution
-    if steady_state_keyword:
-        try:
-            pass  # Execute steady_state_keyword logic
-        except Exception:
-            pass
+    #if steady_state_keyword:
+    #    try:
+    #        pass  # Execute steady_state_keyword logic
+    #    except Exception:
+    #        pass
 
 
     # Pre-test Data Collection
@@ -6025,36 +6069,64 @@ def longevity_test_execution(
         test_pre_snap_dir = collector.execute()
     '''
     collect_longevity_test_data(self, longevity_check_point='test_config_pre_test') 
-    #pdb.set_trace()
+    #
     targets=[]
-    for rtr in self.evo_lng_rtr_list:
+    uport_n =40061
+    default_port = None
+    gnmi_port =0
+    #for rtr in self.evo_lng_rtr_list:
+    for rtr in self.combined_lng_rtr_list:
+        rh = testbed.get_handle(resource=rtr)
         mgt_ip=tv.get(f"{rtr}__re0__mgt-ip")
-        #targets.append(f"{mgt_ip}:50051")
-        targets.append(f"{TARGETS_DICT[mgt_ip]}")
-    #pdb.set_trace()
-
+        is_link_monitor_enabled = tv.get(f"{rtr}__uv-link-monitor-enabled", 0)
+        is_gnmi_inspect_enabled = tv.get(f"{rtr}__uv-evo-gnmi-inspection-enabled",0)
+       
+        if is_gnmi_inspect_enabled:
+            gnmi_port = 50051
+        else:
+            gnmi_port=uport_n
+        cmd_list =[
+            "set system services extension-service request-response grpc clear-text address 0.0.0.0",
+            f"set system services extension-service request-response grpc clear-text port {gnmi_port}",
+            "set system services extension-service request-response grpc max-connections 30",
+            #"set system services extension-service request-response grpc routing-instance mgmt_junos
+            "set system services extension-service request-response grpc skip-authentication",
+            "set system services extension-service request-response grpc grpc-keep-alive 300"
+        ]
+        device_utils.execute_config_command_on_device(
+                rh, command_list=cmd_list, 
+                commit=True, pattern="Toby.*#$"
+        )
+        
+        targets.append(f"{mgt_ip}:{gnmi_port}")
+        uport_n+=1
+        #targets.append(f"{TARGETS_DICT[mgt_ip]}")
+   
     _log_dir = f"{self.LONGEVITY_OUTPUT_DIR}/monitor"
     rmm, rep, run_id = start_sample("Test_Scenario1", targets, _log_dir)
-    #pdb.set_trace() 
+    # 
    
     ## test_config_pre_test to clear lhe logs.
 
     if self.test_scenario == 'Test_Scenario1':
         _model_list = []
-        yang_gnmi_server = testbed.get_handle(resource='h0')
         for rtr in self.evo_lng_rtr_list:              
             is_gnmi_inspect_enabled = tv.get(f"{rtr}__uv-evo-gnmi-inspection-enabled",0)
             if is_gnmi_inspect_enabled == 1:
+                yang_gnmi_server = testbed.get_handle(resource='h0')
                 hostname = tv.get(f"{rtr}__re0__hostname")
                 lng_tel = LongevityTelemetry(yang_gnmi_server,hostname)
                 lng_tel.run_oc_paths()
+                
+                
+            
         #check_for_link_down_events(rtr, 'test_config_pre_test', **kwargs)
         #Check For Link Down Events     ${rtr}      test_config_pre_test
             
 
 
     # TE data snapshot for test config pre_test
-    longevity_te_test_config_snapshot() 
+    #longevity_te_test_config_snapshot() 
     
     # Test Execution
     time1 = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -6135,10 +6207,10 @@ def longevity_test_execution(
         
         collect_longevity_test_data(self, longevity_check_point='lrm_config_post_test')
         
-        try:
-            longevity_te_lrm_baseline_converge()
-        except Exception as e:
-            LLOG(level="WARN", message=f"LRM baseline convergence failed: {str(e)}", **{"self": self})
+        #try:
+        #    longevity_te_lrm_baseline_converge()
+        #except Exception as e:
+        #    LLOG(level="WARN", message=f"LRM baseline convergence failed: {str(e)}", **{"self": self})
 
     # Stop Memory Profiling if applicable
     if self.evo_lng_global_flag:
@@ -6200,8 +6272,8 @@ def longevity_test_execution(
         
 
     # Stop Longevity Test
-    longevity_te_lrm_baseline_stop(self.is_load_lrm_config)
-    longevity_te_test_config_stop()
+    #longevity_te_lrm_baseline_stop(self.is_load_lrm_config)
+    #longevity_te_test_config_stop()
     
 
 
@@ -6383,12 +6455,12 @@ def Data_Collection_Preparation_and_Init(_longevity_rtrs, data_collection, **kwa
     self = kwargs.get('self', None)
     
     # Fetch router list safely
-    evo_lng_rtr_list = kwargs.get('evo_lng_rtr_list', [])
+    #evo_lng_rtr_list = kwargs.get('evo_lng_rtr_list', [])
 
     # Create data collection nodes
     self.data_collect_nodes = create_data_collection_nodes(_longevity_rtrs)
 
-    for rtr in evo_lng_rtr_list:
+    for rtr in self.evo_lng_rtr_list:
         rh = testbed.get_handle(resource=rtr)
         ps_mem_loc = tv.get('uv-evo-ps-mem-location', 
                             '/volume/regressions/toby/test-suites/pdt/lib/longevity/ps_mem.py')

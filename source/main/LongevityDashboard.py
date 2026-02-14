@@ -1840,15 +1840,15 @@ if __name__ == "__main__":
     
 
     evo = Dashboard()
-    #junos = Dashboard()
+    junos = Dashboard()
 
-    #BASE_DIR = '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity'
-    #scenario_list =['ActiveTest_Scenario1','ActiveTest_Scenario2','ActiveTest_Scenario3']
+    BASE_DIR = '/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/junos_ipclos/jpytest_logs/longevity_ipclos_20251030-111750/test_suite_iter_0'
+    scenario_list =['ActiveTest_Scenario1','ActiveTest_Scenario2','ActiveTest_Scenario3']
     
     
     """"
     ###### junos start for single
-    #log_dir_location=f'{BASE_DIR}/test5/ActiveTest_Scenario3'
+    #log_dir_location=f'{BASE_DIR}/ActiveTest_Scenario1'
     log_dir_location="/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/test_suite_iter_0/ActiveTest_Scenario2"
     out_dir='/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/test2'
     #log_dir_location=f'{BASE_DIR}/generic/23.3R1/longi_test_20230820-231637/test_suite_iter_0/ActiveTest_Scenario2'
@@ -1865,8 +1865,8 @@ if __name__ == "__main__":
     #### junos end for single
     """
     
+    #sys.exit(0)
     
-    """
     ## JUNOS for consolidated view:
     
     #### Consolited view ######
@@ -1874,17 +1874,18 @@ if __name__ == "__main__":
     #log_dir_location=f'{BASE_DIR}/generic/23.3R1/longi_test_20230820-231637/'
     #log_dir_location=f'{BASE_DIR}/dedicated/23.3R3/SP_MPLS_VPNSERVICES_2_20230929-045748/'
     #log_dir_location='/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/'
-    #log_dir_location='/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/'
-    #out_dir="/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/test_suite_iter_0/dashboard/long-mx2k-01"
+    log_dir_location='/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/junos_ipclos/jpytest_logs/longevity_ipclos_20251030-111750/'
+    out_dir="/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/test_suite_iter_0/dashboard/long-mx2k-01"
     
     
-    junos_host_list=['long-mx2k-01']
-    junos_plat_data = {'long-mx2k-01':'mx2020-premium2-dc'}
-    junos_router_id = {'long-mx2k-01':'r9'}
+    junos_host_list=['bragi','hypnos']
+    junos_plat_data = {'bragi':'qfx5210-64c-afo2','hypnos':'qfx5210-64c-afo2'}
+    junos_router_id = {'bragi':'r0','hypnos':'r1'}
     #junos_plat_data = {'shifu01':'qfx5210-64c-afo'}
     junos_node_data = {}
     
-    junos_node_data['long-mx2k-01']={'fpc_list':['10','12','15']}
+    junos_node_data['bragi']={'fpc_list':['0']}
+    junos_node_data['hypnos']={'fpc_list':['0']}
    
     
     #node_list={'fpc_list':['1','3']}
@@ -1897,38 +1898,55 @@ if __name__ == "__main__":
         
     for host_name in junos_host_list:
         plat= junos_plat_data[host_name]
-        version='24.2X1.2'
+        version='25.4I-20251023.0.1637'
         rtr=junos_router_id[host_name]
         #rtr = ''
         #out_dir = f"{log_dir_location}test_suite_iter_0/dashboard/{host_name}"
-        out_dir = f"/volume/regressions/results/JUNOS/HEAD/ksanka/longevity/24.2R2/SP_MPLS_VPNSERVICES_2_20240801-185456/test1/dashboard/{host_name}"     
+        out_dir = f"/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/junos_ipclos/jpytest_logs/longevity_ipclos_20251030-111750/test_suite_iter_0/dashboard/{host_name}"     
         junos.plot_graph_for_single_global_iteation_dashboard(out_dir=out_dir,host_name=host_name, platform=plat,version=version,lrm_view=False, rtr=rtr)
         lrm_out_dir = f"{out_dir}/lrm_view"
         junos.plot_graph_for_single_global_iteation_dashboard(out_dir=lrm_out_dir,host_name=host_name, platform=plat,version=version,lrm_view=True, rtr=rtr)
+    
+    
     
     """
  
     ### consolited view for EVO:
     
     #log_dir_location=f'{BASE_DIR}/dedicated/23.3R3/SP_MPLS_VPNSERVICES_2_20230929-045748/'
-    log_dir_location='/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250430-151254/'
+    #log_dir_location='/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250430-151254/'
+    log_dir_location='/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20251024-092609/'
     #evo_host_list=['long-ptx108-02','long-ptx10k-01','long-ptx104-01']
-    evo_host_list=['svla-q5240-01']
-    scenario_list =['ActiveTest_Scenario1','ActiveTest_Scenario2','ActiveTest_Scenario3']
+    evo_host_list = [
+        "san-q5240-15",
+        "san-q5240-q02",
+        "san-q5240-01",
+        "san-q5240-02",
+        "san-q5240-03",
+        "san-q5230-01",
+        "san-q5130-01",
+        "san-q5700-03",
+        "san-q5220-01"
+    ]
+    scenario_list =['ActiveTest_Scenario2']
     #scenario_list =['PassiveTest_Scenario1','PassiveTest_Scenario2','PassiveTest_Scenario3']
     #evo_host_list = ['long-ptx108-02']
     #evo_host_list = ['long-ptx10k-01']
-    evo_plat_data = {'svla-q5240-01':'qfx5240-64c','long-ptx10k-01':'ptx10001-36mr-ac','long-ptx104-01':'ptx10004 ','qnc-hillside-02':'qfx5700','boxer':'qfx5130-32cd','rpd-vpn-spec-b':'qfx5130-32cd','rpd-vpn-spec-a':'qfx5130-32cd'}
-    evo_router_id = {'svla-q5240-01':'r0','long-ptx10k-01':'r4','long-ptx104-01':'r5','qnc-hillside-02':'r0','boxer':'r1','rpd-vpn-spec-b':'r2','rpd-vpn-spec-a':'r3'}
+    evo_plat_data = {'san-q5240-15':'QFX5240-64OD','san-q5240-q02':'QFX5240-64QD','san-q5240-01':'QFX5240-64OD','san-q5240-02':'QFX5240-64OD','san-q5240-03':'QFX5240-64OD','san-q5230-01':'QFX5230-64CD','san-q5130-01':'QFX5130-32CD','san-q5220-01':'QFX5220-32CD','san-q5700-03':'QFX5700'}
+    evo_router_id = {'san-q5240-15':'r0','san-q5240-q02':'r1','san-q5240-01':'r2','san-q5240-02':'r3','san-q5240-03':'r4','san-q5230-01':'r5','san-q5130-01':'r6','san-q5220-01':'r7','san-q5700-03':'r8'}
+    #evo_router_id = {'san-q5240-15':'r0','long-ptx10k-01':'r4','long-ptx104-01':'r5','qnc-hillside-02':'r0','boxer':'r1','rpd-vpn-spec-b':'r2','rpd-vpn-spec-a':'r3'}
     evo_node_data = {}
-    version='24.3R1.1-EVO'
+    version='25.4-202510180231.0-EVO'
     #plat="ptx10004"
     rtr=''
     
     #evo_node_data['stqc-p10k4-01']={'fpc_list':['fpc0','fpc1']}
     #evo_node_data['long-ptx108-02']=['re0','re1','fpc0']
     #evo_node_data['long-ptx10k-01']=['re0']
-    evo_node_data['svla-q5240-01']=['re0']
+    #evo_node_data['san-q5240-15']=['re0']
+    
+    evo_node_data = {key: ['re0'] for key in evo_plat_data.keys()}
+    
     #evo_node_data['qnc-hillside-02']=['re0', 'fpc0', 'fpc1', 'fpc2', 'fpc3']
     #evo_node_data['boxer']=['re0', 'fpc0']
     #evo_node_data['rpd-vpn-spec-b']=['re0', 'fpc0']
@@ -1948,17 +1966,20 @@ if __name__ == "__main__":
             #evo.collect_data_from_show_task_memory_detail(log_dir_location=sub_log_dir_location, host_name=host_name,scenario=scenario) 
     
     for host_name in evo_host_list:
-        version='24.3R1.1-EVO'
+        version='25.4-202510180231.0-EVO'
         rtr = evo_router_id[host_name]
         plat = evo_plat_data[host_name]
         #out_dir = f"{log_dir_location}test_suite_iter_0/dashboard/{host_name}" 
-        out_dir = f"/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/24.3R1.1/longevity_dcf_20240831-015843/test_suite_iter_0/dashboard/{host_name}"    
-        out_dir = f"/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250430-151254/test_suite_iter_0/dashboard/{host_name}"
+        #out_dir = f"/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/24.3R1.1/longevity_dcf_20240831-015843/test_suite_iter_0/dashboard/{host_name}"    
+        #out_dir = f"/volume/regressions/results/JUNOS/HEAD/mmahadevaswa/longevity/IPCLOS/conversion/converted/jpytest_logs/longevity_ipclos_20250430-151254/test_suite_iter_0/dashboard/{host_name}"
+        out_dir = f"{log_dir_location}/test_suite_iter_0/ActiveTest_Scenario2/dashboard/{host_name}"
         evo.plot_graph_for_single_global_iteation_dashboard(out_dir=out_dir,host_name=host_name, platform=plat,version=version,lrm_view=False, rtr=rtr) 
-        out_dir1 = f"{out_dir}/lrm_view"   
-        evo.plot_graph_for_single_global_iteation_dashboard(out_dir=out_dir1,host_name=host_name, platform=plat,version=version,lrm_view=True, rtr=rtr)  
+        #out_dir1 = f"{out_dir}/lrm_view"   
+        #evo.plot_graph_for_single_global_iteation_dashboard(out_dir=out_dir1,host_name=host_name, platform=plat,version=version,lrm_view=True, rtr=rtr)  
        
    
+    
+    """
     
     """
     ####### Evo start for single
@@ -2004,6 +2025,7 @@ if __name__ == "__main__":
     evo.collect_show_platform_distributor_statistics_all_clients(log_dir_location=log_dir_location, host_name=host_name)
     evo.plot_graph_in_dashboard(out_dir=out_dir,host_name=host_name,platform=plat, version="22.4R3.2-EVO",url='')
     
+ 
     """
  
         

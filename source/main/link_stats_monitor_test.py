@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 # run_linkmon_samples.py
 #
-# Runs the link-state monitor in 3 clean samples:
-# - per-sample unique run_id → unique remote log files
-# - start monitors, start reporter, wait N seconds, stop reporter (stops monitors)
-# - prints final per-target status and remote log file paths for each sample
+# Orchestrates link_state_service.py across N samples:
+# - Per-sample unique run_id → unique remote log names
+# - Start remote monitors for the given targets
+# - Start a periodic health reporter on the controller
+# - Wait SAMPLE_DURATION_SEC, then stop reporter (and remote monitors)
+# - Prints final status + remote log paths
 
 from datetime import datetime
 import time
+import os
 import sys
 import traceback
-from typing import Tuple  # <-- Python < 3.9: use typing.Tuple
+from typing import Tuple  # for Python < 3.9
+
+# Ensure we can import link_state_service from the same directory
+ROOT = os.path.dirname(os.path.abspath(__file__))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
 
 from link_state_service import (
     MonitorConfig,
@@ -25,33 +33,32 @@ REMOTE_HOST = "10.83.6.46"
 REMOTE_USER = "root"
 REMOTE_PASS = "Embe1mpls"
 
+# Default target list (you can pass a subset into start_sample if needed)
 TARGETS = [
-    
     "10.83.6.3:50051",
-    "10.83.6.4:50052",
-    "10.83.6.30:50053",
-    "10.83.6.28:50054",
-    "10.83.6.5:50055",
-    "10.83.6.25:50056",
-    "10.83.6.32:50057",
-    "10.83.6.21:50058",
+#    "10.83.6.4:50052",
+#    "10.83.6.30:50053",
+#    "10.83.6.28:50054",
+#    "10.83.6.5:50055",
+#    "10.83.6.25:50056",
+#    "10.83.6.32:50057",
+#    "10.83.6.21:50058",
     "10.83.6.9:50059",
-    
 ]
 
-SAMPLES = 1                # run the service 3 times
-SAMPLE_DURATION_SEC = 300   # 5 minutes per sample
-SAMPLE_GAP_SEC = 5          # small idle gap between samples
+SAMPLES = 3                   # number of samples to run
+SAMPLE_DURATION_SEC = 300     # 5 minutes per sample
+SAMPLE_GAP_SEC = 5            # gap between samples (seconds)
 
-REPORT_INTERVAL_SEC = 60    # reporter cadence
-REPORT_SINCE = "1m"         # window for "updates since"
-REPORT_FMT = "text"         # "text" | "json" | "jsonl"
-REPORT_OUT_DIR = "/tmp" # snapshots written on the controller host
+REPORT_INTERVAL_SEC = 60      # reporter cadence on the controller
+REPORT_FMT = "html"          # "jsonl" | "json" | "text"
+REPORT_OUT_DIR = "/homes/mmahadevaswa/public_html"       # where snapshots are written (controller host)
 
-DEPLOY_MODULE = True        # push local link_state_service.py to remote before first sample
+# Set to 0 to avoid re-printing gnmic "starting..." lines in snapshots
+REPORT_TAIL_LINES = 0
 
-# Optional tag to group runs by test
-TEST_ID = "longevity_run"
+DEPLOY_MODULE = True          # deploy link_state_service.py to remote before sample #1
+TEST_ID = "longevity_run"     # tag in run_id for grouping
 
 # -------------------------
 # Helpers
@@ -60,28 +67,34 @@ def make_run_id(sample_idx: int) -> str:
     ts = datetime.now().strftime("%Y%m%d_%H-%M-%S")
     return f"{TEST_ID}_sample{sample_idx}_{ts}"
 
-def start_sample(sample_idx: int) -> Tuple[RemoteMultiMonitor, PeriodicHealthReporter, str]:
+def _since_from_interval(interval_sec: int) -> str:
+    """Use ~2× interval as the 'since' window: expressed in minutes."""
+    mins = max(1, int(round((interval_sec * 2) / 60.0)))
+    return f"{mins}m"
+
+# -------------------------
+# Per-sample lifecycle
+# -------------------------
+def start_sample(sample_idx: int, targets, report_out_dir) -> Tuple[RemoteMultiMonitor, PeriodicHealthReporter, str]:
     run_id = make_run_id(sample_idx)
 
-    # Base gnmic subscribe config; applied per target
     base_cfg = MonitorConfig(
-        address="unused",                 # filled per-target internally
+        address="unused",          # filled per-target internally
         username="root",
         password="Embe1mpls",
         out_format="json",
         updates_only=True,
         insecure=True,
         alert_any=True,
-        debug=True,
+        debug=False,               # flip to True for deep diagnosis
     )
 
-    # Remote controller for this sample (unique run_id → unique remote logs)
     rmm = RemoteMultiMonitor(
         host=REMOTE_HOST,
         username=REMOTE_USER,
         password=REMOTE_PASS,
         base_cfg=base_cfg,
-        targets=TARGETS,
+        targets=targets,
         remote_module_path="/opt/linkmon/link_state_service.py",
         run_id=run_id,
     )
@@ -91,45 +104,56 @@ def start_sample(sample_idx: int) -> Tuple[RemoteMultiMonitor, PeriodicHealthRep
         rmm.deploy("link_state_service.py")
 
     started = rmm.start_all(singleton_mode="kill")
-    print(f"[INFO] Sample {sample_idx}: started ->", started, flush=True)
+    print(f"[INFO] Sample {sample_idx}: started -> {started}", flush=True)
 
     rep = PeriodicHealthReporter(
         rmm,
-        TARGETS,
-        out_dir=REPORT_OUT_DIR,
+        targets,
+        out_dir=report_out_dir,
         fmt=REPORT_FMT,
         interval_sec=REPORT_INTERVAL_SEC,
-        since=REPORT_SINCE,
-        tail_lines=20,
-        truncate_first=True,     # first tick overwrites the output file for this run_id
+        since=_since_from_interval(REPORT_INTERVAL_SEC),
+        tail_lines=REPORT_TAIL_LINES,   # 0 keeps snapshots quiet
+        truncate_first=True,
         also_print=False,
-        run_id=run_id,           # keep reporter files aligned with sample run_id
-        stop_monitors_on_stop=True,
+        run_id=run_id,
+        stop_monitors_on_stop=True,     # reporter.stop() will stop all remote monitors
     )
     rep.start()
     return rmm, rep, run_id
 
-def stop_sample(rmm: RemoteMultiMonitor, rep: PeriodicHealthReporter, sample_idx: int, run_id: str) -> None:
-    rep.stop()  # stops reporter AND remote monitors (flag above)
+def stop_sample(
+    rmm: RemoteMultiMonitor,
+    rep: PeriodicHealthReporter,
+    sample_idx: int,
+    run_id: str,
+    targets: list,
+    log_dir: str,
+) -> None:
+    # stops reporter AND remote monitors (per stop_monitors_on_stop flag)
+    rep.stop()
     try:
         status = rmm.status_all()
     except Exception:
         status = {}
     print(f"[INFO] Sample {sample_idx}: final status -> {status}", flush=True)
 
-    # Print per-target remote log paths (handy for fetching)
-    for addr in TARGETS:
+    # Print per-target remote log paths for convenience
+    for addr in targets:
         slug = addr.replace(".", "_").replace(":", "_")
-        remote_log = f"/var/log/link_state_monitor_{slug}_{run_id}.log"
+        remote_log = f"{log_dir}/link_state_monitor_{slug}_{run_id}.log"
         print(f"[INFO] Remote log for {addr}: {remote_log}", flush=True)
 
 # -------------------------
 # Main orchestration
 # -------------------------
 def main() -> int:
+    # Choose which targets to run this session
+    targets = TARGETS
+
     for i in range(1, SAMPLES + 1):
         print(f"\n===== START SAMPLE {i}/{SAMPLES} =====", flush=True)
-        rmm, rep, run_id = start_sample(i)
+        rmm, rep, run_id = start_sample(i, targets, REPORT_OUT_DIR)
 
         try:
             end_ts = time.time() + SAMPLE_DURATION_SEC
@@ -141,7 +165,7 @@ def main() -> int:
             print("[ERROR] Unexpected error in sample loop:", file=sys.stderr)
             traceback.print_exc()
         finally:
-            stop_sample(rmm, rep, i, run_id)
+            stop_sample(rmm, rep, i, run_id, targets, "/var/log")
 
         if i < SAMPLES and SAMPLE_GAP_SEC > 0:
             print(f"[INFO] Gap {SAMPLE_GAP_SEC}s before next sample…", flush=True)
